@@ -95,7 +95,6 @@ export class BankingService {
     );
   }
 
-  // Other methods remain unchanged
   saveCurrentBankAccount(initialBalance: number, overDraft: number, customerId: number): Observable<CurrentBankAccountDTO> {
     console.log('Saving current account:', { initialBalance, overDraft, customerId });
     const body = { initialBalance, overDraft, customerId };
@@ -123,18 +122,6 @@ export class BankingService {
       catchError(err => {
         console.error('Save saving account error:', err);
         this.showError(`Failed to create saving account: ${err.status || 'Unknown'} ${err.statusText || err.message}`);
-        return throwError(() => err);
-      })
-    );
-  }
-
-  searchCustomers(keyword: string): Observable<CustomerDTO[]> {
-    console.log('Searching customers:', keyword);
-    const params = new HttpParams().set('keyword', keyword);
-    return this.http.get<CustomerDTO[]>(`${this.apiUrl}/customers/search`, { params }).pipe(
-      catchError(err => {
-        console.error('Search customers error:', err);
-        this.showError(`Failed to search customers: ${err.status || 'Unknown'} ${err.statusText || err.message}`);
         return throwError(() => err);
       })
     );
@@ -198,16 +185,6 @@ export class BankingService {
     );
   }
 
-  getBankAccount(accountId: string): Observable<BankAccountDTO> {
-    console.log('Fetching bank account:', accountId);
-    return this.http.get<BankAccountDTO>(`${this.apiUrl}/accounts/${accountId}`).pipe(
-      catchError(err => {
-        console.error('Get bank account error:', err);
-        this.showError(`Failed to fetch bank account: ${err.status || 'Unknown'} ${err.statusText || err.message}`);
-        return throwError(() => err);
-      })
-    );
-  }
 
   getBankAccounts(): Observable<BankAccountDTO[]> {
     console.log('Fetching bank accounts');
@@ -215,21 +192,6 @@ export class BankingService {
       catchError(err => {
         console.error('Get bank accounts error:', err);
         this.showError(`Failed to fetch bank accounts: ${err.status || 'Unknown'} ${err.statusText || err.message}`);
-        return throwError(() => err);
-      })
-    );
-  }
-
-  saveBankAccount(account: BankAccountDTO): Observable<BankAccountDTO> {
-    console.log('Saving bank account:', account);
-    return this.http.post<BankAccountDTO>(`${this.apiUrl}/accounts`, account).pipe(
-      map(response => {
-        this.snackBar.open('Bank account created successfully', 'Close', { duration: 3000 });
-        return response;
-      }),
-      catchError(err => {
-        console.error('Save bank account error:', err);
-        this.showError(`Failed to create bank account: ${err.status || 'Unknown'} ${err.statusText || err.message}`);
         return throwError(() => err);
       })
     );
@@ -318,8 +280,31 @@ export class BankingService {
       })
     );
   }
+  searchBankAccounts(keyword: string): Observable<BankAccountDTO[]> {
+    return this.http.get<BankAccountDTO[]>(`${this.apiUrl}/accounts/search?keyword=${keyword}`);
+  }
 
   showError(message: string) {
     this.snackBar.open(message, 'Close', { duration: 5000 });
   }
+  // Helper methods
+  showSuccess(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+  }
+  searchCustomers(keyword: string): Observable<CustomerDTO[]> {
+    console.log('Searching customers:', keyword);
+    const params = new HttpParams().set('keyword', keyword);
+    return this.http.get<CustomerDTO[]>(`${this.apiUrl}/customers/search`, { params }).pipe(
+      catchError(err => {
+        console.error('Search customers error:', err);
+        this.showError(`Failed to search customers: ${err.status || 'Unknown'} ${err.statusText || err.message}`);
+        return throwError(() => err);
+      })
+    );
+  }
+
+
 }
