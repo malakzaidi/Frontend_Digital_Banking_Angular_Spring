@@ -8,7 +8,7 @@ import { routes } from './app/app.routes';
 import { provideHttpClient } from '@angular/common/http';
 import { importProvidersFrom } from '@angular/core';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { NoopAnimationsModule } from '@angular/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideServerRendering } from '@angular/platform-server';
 import { environment } from './environments/environment';
 
