@@ -1,0 +1,31 @@
+<div style="padding: 16px;">
+  <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+    <mat-form-field style="width: 300px;">
+      <mat-label>Search Customers</mat-label>
+      <input matInput [(ngModel)]="searchKeyword" (input)="searchCustomers()" placeholder="Enter name">
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="addCustomer()">Add Customer</button>
+  </div>
+  <mat-table [dataSource]="customers()">
+    <ng-container matColumnDef="id">
+      <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
+      <mat-cell *matCellDef="let customer">{{customer.id}}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="name">
+      <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+      <mat-cell *matCellDef="let customer">{{customer.name}}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="email">
+      <mat-header-cell *matHeaderCellDef>Email</mat-header-cell>
+      <mat-cell *matCellDef="let customer">{{customer.email}}</mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+      <mat-cell *matCellDef="let customer">
+        <a [routerLink]="['/accounts', customer.accounts[0]?.id]" mat-button color="accent">View Accounts</a>
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+</div>
