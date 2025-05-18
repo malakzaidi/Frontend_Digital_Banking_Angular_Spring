@@ -17,8 +17,10 @@ export interface BankAccountDTO {
   balance: number;
   createdAt: string;
   customerId: number;
+  customerName: string;
   type: string;
 }
+
 
 export interface CurrentBankAccountDTO extends BankAccountDTO {
   overDraft: number;

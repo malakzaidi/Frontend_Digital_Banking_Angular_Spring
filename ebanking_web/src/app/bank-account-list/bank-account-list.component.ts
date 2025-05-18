@@ -52,7 +52,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
           </ng-container>
           <ng-container matColumnDef="customerId">
             <th mat-header-cell *matHeaderCellDef>Customer ID</th>
-            <td mat-cell *matCellDef="let account">{{ account.customerId || 'N/A' }}</td>
+            <td mat-cell *matCellDef="let account">{{ account.customerId }}</td>
           </ng-container>
           <ng-container matColumnDef="customerName">
             <th mat-header-cell *matHeaderCellDef>Customer Name</th>
@@ -162,17 +162,15 @@ export class BankAccountListComponent implements OnInit {
     this.bankingService.getCustomers().subscribe({
       next: customers => {
         this.customers = customers;
-        console.log('Raw customers from API:', customers); // Log raw data
-        console.log('Processed customers:', customers.map(c => ({ id: c.id, name: c.name })));
+        console.log('Loaded customers:', customers.map(c => ({ id: c.id, name: c.name })));
 
-        // Create a map for faster lookup, with fallback for invalid IDs
+        // Create a map for faster lookup
         this.customerMap.clear();
         customers.forEach(customer => {
-          const customerId = customer.id !== undefined && customer.id !== null ? Number(customer.id) : null;
-          if (customerId !== null && !isNaN(customerId)) {
-            this.customerMap.set(customerId, customer.name || 'Unknown');
+          if (customer.id !== undefined && customer.id !== null) {
+            this.customerMap.set(Number(customer.id), customer.name); // Ensure number type
           } else {
-            console.warn('Invalid customer ID found:', customer);
+            console.warn('Customer with undefined or null ID found:', customer);
           }
         });
 
@@ -190,15 +188,11 @@ export class BankAccountListComponent implements OnInit {
   loadAllAccounts() {
     this.bankingService.getBankAccounts().subscribe({
       next: accounts => {
-        this.accounts = accounts.map(account => {
-          const customerId = account.customerId !== undefined && account.customerId !== null ? Number(account.customerId) : null;
-          return {
-            ...account,
-            customerId: customerId !== null && !isNaN(customerId) ? customerId : 0 // Fallback to 0 if invalid
-          };
-        });
-        console.log('Raw accounts from API:', accounts); // Log raw data
-        console.log('Processed accounts:', this.accounts.map(a => ({ id: a.id, customerId: a.customerId, type: a.type })));
+        this.accounts = accounts.map(account => ({
+          ...account,
+          customerId: Number(account.customerId) // Ensure customerId is a number
+        }));
+        console.log('Loaded accounts:', this.accounts.map(a => ({ id: a.id, customerId: a.customerId, type: a.type })));
         this.isLoading = false;
         this.cdr.detectChanges(); // Force re-render
       },
@@ -213,23 +207,20 @@ export class BankAccountListComponent implements OnInit {
   }
 
   getCustomerName(customerId: number | undefined): string {
-    if (customerId === undefined || customerId === null || isNaN(customerId)) {
-      console.warn('Invalid customer ID:', customerId);
+    if (customerId === undefined || customerId === null) {
+      console.warn('Customer ID is undefined or null');
       return 'No Customer Assigned';
     }
 
-    const normalizedId = Number(customerId);
+    const normalizedId = Number(customerId); // Normalize to number
     if (this.customerMap.has(normalizedId)) {
       return this.customerMap.get(normalizedId)!;
     }
 
-    const customer = this.customers.find(c => {
-      const cId = c.id !== undefined && c.id !== null ? Number(c.id) : null;
-      return cId !== null && !isNaN(cId) && cId === normalizedId;
-    });
+    const customer = this.customers.find(c => Number(c.id) === normalizedId);
     if (customer) {
-      this.customerMap.set(normalizedId, customer.name || 'Unknown');
-      return customer.name || 'Unknown';
+      this.customerMap.set(normalizedId, customer.name);
+      return customer.name;
     }
 
     console.warn(`Customer with ID ${normalizedId} not found in customers:`, this.customers.map(c => c.id));
@@ -256,15 +247,11 @@ export class BankAccountListComponent implements OnInit {
     console.log('Searching accounts with keyword:', keyword);
     this.bankingService.searchBankAccounts(keyword).subscribe({
       next: accounts => {
-        this.accounts = accounts.map(account => {
-          const customerId = account.customerId !== undefined && account.customerId !== null ? Number(account.customerId) : null;
-          return {
-            ...account,
-            customerId: customerId !== null && !isNaN(customerId) ? customerId : 0 // Fallback to 0 if invalid
-          };
-        });
-        console.log('Raw search results from API:', accounts);
-        console.log('Processed search results:', this.accounts.map(a => ({ id: a.id, customerId: a.customerId, type: a.type })));
+        this.accounts = accounts.map(account => ({
+          ...account,
+          customerId: Number(account.customerId) // Ensure customerId is a number
+        }));
+        console.log('Search results:', this.accounts.map(a => ({ id: a.id, customerId: a.customerId, type: a.type })));
         this.isLoading = false;
         this.cdr.detectChanges();
       },
