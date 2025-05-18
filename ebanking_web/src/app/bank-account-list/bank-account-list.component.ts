@@ -1,4 +1,4 @@
-import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject, ChangeDetectorRef } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +10,7 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { BankAccountDTO, BankingService, CustomerDTO } from '../services/banking.service';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-bank-account-list',
@@ -41,7 +41,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
       </div>
 
       <div class="table-container mat-elevation-z8">
-        <table mat-table [dataSource]="accounts">
+        <table mat-table [dataSource]="accounts" *ngIf="accounts.length > 0 || isLoading">
           <ng-container matColumnDef="id">
             <th mat-header-cell *matHeaderCellDef>ID</th>
             <td mat-cell *matCellDef="let account">{{ account.id }}</td>
@@ -52,7 +52,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
           </ng-container>
           <ng-container matColumnDef="customerId">
             <th mat-header-cell *matHeaderCellDef>Customer ID</th>
-            <td mat-cell *matCellDef="let account">{{ account.customerId }}</td>
+            <td mat-cell *matCellDef="let account">{{ account.customerId || 'N/A' }}</td>
           </ng-container>
           <ng-container matColumnDef="customerName">
             <th mat-header-cell *matHeaderCellDef>Customer Name</th>
@@ -74,8 +74,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
         </table>
       </div>
 
-      <div *ngIf="accounts.length === 0" class="no-results">
-        No accounts found. Try a different search term.
+      <div *ngIf="accounts.length === 0 && !isLoading" class="no-results">
+        No accounts found. Try a different search term or refresh the page.
       </div>
 
       <div class="button-container">
@@ -131,11 +131,13 @@ export class BankAccountListComponent implements OnInit {
   displayedColumns: string[] = ['id', 'balance', 'customerId', 'customerName', 'type', 'actions'];
   searchKeyword: string = '';
   private searchSubject = new Subject<string>();
-  private customerMap: Map<number, string> = new Map();
+  private customerMap: Map<number, string> = new Map<number, string>();
+  isLoading: boolean = true;
 
   constructor(
     private bankingService: BankingService,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private cdr: ChangeDetectorRef
   ) {
     // Set up debounce for search to avoid too many API calls
     this.searchSubject.pipe(
@@ -148,54 +150,90 @@ export class BankAccountListComponent implements OnInit {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      this.loadAllAccounts();
       this.loadAllCustomers();
     } else {
       console.log('Skipping bank accounts fetch on server-side');
+      this.isLoading = false;
     }
+  }
+
+  loadAllCustomers() {
+    this.isLoading = true;
+    this.bankingService.getCustomers().subscribe({
+      next: customers => {
+        this.customers = customers;
+        console.log('Raw customers from API:', customers); // Log raw data
+        console.log('Processed customers:', customers.map(c => ({ id: c.id, name: c.name })));
+
+        // Create a map for faster lookup, with fallback for invalid IDs
+        this.customerMap.clear();
+        customers.forEach(customer => {
+          const customerId = customer.id !== undefined && customer.id !== null ? Number(customer.id) : null;
+          if (customerId !== null && !isNaN(customerId)) {
+            this.customerMap.set(customerId, customer.name || 'Unknown');
+          } else {
+            console.warn('Invalid customer ID found:', customer);
+          }
+        });
+
+        // Load accounts after customers are ready
+        this.loadAllAccounts();
+      },
+      error: err => {
+        console.error('Load customers error:', err);
+        this.bankingService.showError(`Failed to load customers: ${err.status || 'Unknown error'}`);
+        this.loadAllAccounts(); // Proceed even if customers fail
+      }
+    });
   }
 
   loadAllAccounts() {
     this.bankingService.getBankAccounts().subscribe({
       next: accounts => {
-        this.accounts = accounts;
-        console.log('Loaded accounts:', accounts);
+        this.accounts = accounts.map(account => {
+          const customerId = account.customerId !== undefined && account.customerId !== null ? Number(account.customerId) : null;
+          return {
+            ...account,
+            customerId: customerId !== null && !isNaN(customerId) ? customerId : 0 // Fallback to 0 if invalid
+          };
+        });
+        console.log('Raw accounts from API:', accounts); // Log raw data
+        console.log('Processed accounts:', this.accounts.map(a => ({ id: a.id, customerId: a.customerId, type: a.type })));
+        this.isLoading = false;
+        this.cdr.detectChanges(); // Force re-render
       },
       error: err => {
         console.error('Load accounts error:', err);
         this.bankingService.showError(`Failed to load accounts: ${err.status} ${err.statusText}`);
+        this.accounts = [];
+        this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  loadAllCustomers() {
-    this.bankingService.getCustomers().subscribe({
-      next: customers => {
-        this.customers = customers;
-        console.log('Loaded customers for name display:', customers);
-
-        // Create a map for faster lookup
-        this.customerMap.clear();
-        customers.forEach(customer => {
-          // @ts-ignore
-          return this.customerMap.set(customer.id, customer.name);
-        });
-      },
-      error: err => {
-        console.error('Load customers error:', err);
-      }
-    });
-  }
-
-  getCustomerName(customerId: number): string {
-    // First check the map for faster lookup
-    if (this.customerMap.has(customerId)) {
-      return this.customerMap.get(customerId)!;
+  getCustomerName(customerId: number | undefined): string {
+    if (customerId === undefined || customerId === null || isNaN(customerId)) {
+      console.warn('Invalid customer ID:', customerId);
+      return 'No Customer Assigned';
     }
 
-    // Fallback to array search if map fails
-    const customer = this.customers.find(c => c.id === customerId);
-    return customer ? customer.name : `Customer #${customerId}`;
+    const normalizedId = Number(customerId);
+    if (this.customerMap.has(normalizedId)) {
+      return this.customerMap.get(normalizedId)!;
+    }
+
+    const customer = this.customers.find(c => {
+      const cId = c.id !== undefined && c.id !== null ? Number(c.id) : null;
+      return cId !== null && !isNaN(cId) && cId === normalizedId;
+    });
+    if (customer) {
+      this.customerMap.set(normalizedId, customer.name || 'Unknown');
+      return customer.name || 'Unknown';
+    }
+
+    console.warn(`Customer with ID ${normalizedId} not found in customers:`, this.customers.map(c => c.id));
+    return `Customer ID: ${normalizedId}`;
   }
 
   onSearchChange(event: Event) {
@@ -214,15 +252,28 @@ export class BankAccountListComponent implements OnInit {
       return;
     }
 
+    this.isLoading = true;
     console.log('Searching accounts with keyword:', keyword);
     this.bankingService.searchBankAccounts(keyword).subscribe({
       next: accounts => {
-        this.accounts = accounts;
-        console.log('Search results:', accounts);
+        this.accounts = accounts.map(account => {
+          const customerId = account.customerId !== undefined && account.customerId !== null ? Number(account.customerId) : null;
+          return {
+            ...account,
+            customerId: customerId !== null && !isNaN(customerId) ? customerId : 0 // Fallback to 0 if invalid
+          };
+        });
+        console.log('Raw search results from API:', accounts);
+        console.log('Processed search results:', this.accounts.map(a => ({ id: a.id, customerId: a.customerId, type: a.type })));
+        this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: err => {
         console.error('Search accounts error:', err);
         this.bankingService.showError(`Failed to search accounts: ${err.status} ${err.statusText}`);
+        this.accounts = [];
+        this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

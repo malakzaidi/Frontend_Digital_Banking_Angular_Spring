@@ -128,11 +128,15 @@ export class BankingService {
   }
 
   getCustomer(id: number): Observable<CustomerDTO> {
-    console.log('Fetching customer:', id);
+    console.log('Fetching customer with ID:', id);
     return this.http.get<CustomerDTO>(`${this.apiUrl}/customers/${id}`).pipe(
+      map(customer => {
+        console.log('Fetched customer:', customer);
+        return customer;
+      }),
       catchError(err => {
         console.error('Get customer error:', err);
-        this.showError(`Failed to fetch customer: ${err.status || 'Unknown'} ${err.statusText || err.message}`);
+        this.showError(`Failed to fetch customer: ${err.message || err}`);
         return throwError(() => err);
       })
     );

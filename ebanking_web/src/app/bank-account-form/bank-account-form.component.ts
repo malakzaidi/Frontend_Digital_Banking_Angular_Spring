@@ -123,9 +123,19 @@ export class BankAccountFormComponent implements OnInit {
       this.bankingService.showError('Please fill all required fields correctly');
       return;
     }
+
+    // Ensure the values are numbers and not undefined
+    const overDraft = this.account.type === 'current' ?
+      (this.account.overDraft || 0) : 0;
+
+    const interestRate = this.account.type === 'saving' ?
+      (this.account.interestRate || 0) : 0;
+
+    const customerId = this.account.customerId || 0;
+
     const observable = this.account.type === 'current'
-      ? this.bankingService.saveCurrentBankAccount(this.account.initialBalance, this.account.overDraft!, this.account.customerId)
-      : this.bankingService.saveSavingBankAccount(this.account.initialBalance, this.account.interestRate!, this.account.customerId);
+      ? this.bankingService.saveCurrentBankAccount(this.account.initialBalance, overDraft, customerId)
+      : this.bankingService.saveSavingBankAccount(this.account.initialBalance, interestRate, customerId);
 
     // @ts-ignore
     observable.subscribe({

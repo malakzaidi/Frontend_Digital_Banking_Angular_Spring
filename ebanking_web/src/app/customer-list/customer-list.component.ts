@@ -162,7 +162,10 @@ export class CustomerListComponent implements OnInit {
       next: customers => {
         this.customers = customers;
         this.loading = false;
-        console.log('CustomerListComponent: Customers loaded:', customers);
+        console.log('CustomerListComponent: Customers loaded with full details:', JSON.stringify(customers));
+        // Check if emails exist in the data
+        const hasEmails = customers.some(customer => customer.email !== undefined && customer.email !== null);
+        console.log('CustomerListComponent: Data has email values:', hasEmails);
       },
       error: err => {
         this.loading = false;
