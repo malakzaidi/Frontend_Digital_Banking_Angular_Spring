@@ -12,7 +12,7 @@ export const routes: Routes = [
   { path: '', redirectTo: '/customers', pathMatch: 'full' },
   { path: 'customers', component: CustomerListComponent },
   { path: 'customers/new', component: CustomerFormComponent },
-  { path: 'customers/edit/:id', component: CustomerListComponent },
+  { path: 'customers/edit/:id', component: CustomerFormComponent },
   { path: 'accounts', component: BankAccountListComponent },
   { path: 'accounts/new', component: BankAccountFormComponent },
   { path: 'accounts/edit/:id', component: BankAccountFormComponent },

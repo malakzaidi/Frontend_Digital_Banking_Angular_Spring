@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
@@ -49,20 +50,48 @@ export class BankAccountListComponent implements OnInit {
   accounts: BankAccountDTO[] = [];
   displayedColumns: string[] = ['id', 'balance', 'customerId', 'type', 'actions'];
 
-  constructor(private bankingService: BankingService) {}
+  constructor(
+    private bankingService: BankingService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   ngOnInit() {
-    this.bankingService.getBankAccounts().subscribe(accounts => {
-      this.accounts = accounts;
-    });
+    if (isPlatformBrowser(this.platformId)) {
+      this.bankingService.getBankAccounts().subscribe({
+        next: accounts => {
+          this.accounts = accounts;
+          console.log('Loaded accounts:', accounts);
+        },
+        error: err => {
+          console.error('Load accounts error:', err);
+          this.bankingService.showError(`Failed to load accounts: ${err.status} ${err.statusText}`);
+        }
+      });
+    } else {
+      console.log('Skipping bank accounts fetch on server-side');
+    }
   }
 
   deleteAccount(accountId: string) {
     if (confirm('Are you sure you want to delete this account?')) {
-      this.bankingService.deleteBankAccount(accountId).subscribe(() => {
-        this.bankingService.getBankAccounts().subscribe(accounts => {
-          this.accounts = accounts;
-        });
+      console.log('Deleting account:', accountId);
+      this.bankingService.deleteBankAccount(accountId).subscribe({
+        next: () => {
+          console.log('Account deleted:', accountId);
+          this.bankingService.getBankAccounts().subscribe({
+            next: accounts => {
+              this.accounts = accounts;
+            },
+            error: err => {
+              console.error('Reload accounts error:', err);
+              this.bankingService.showError(`Failed to reload accounts: ${err.status} ${err.statusText}`);
+            }
+          });
+        },
+        error: err => {
+          console.error('Delete account error:', err);
+          this.bankingService.showError(`Failed to delete account: ${err.status} ${err.statusText}`);
+        }
       });
     }
   }
