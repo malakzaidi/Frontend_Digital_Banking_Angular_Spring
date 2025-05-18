@@ -1,10 +1,11 @@
 import { Routes } from '@angular/router';
-import {CustomersComponent} from './customers/customers.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { CustomerListComponent } from './components/customer-list/customer-list.component';
+import { AccountDetailsComponent } from './components/account-details/account-details.component';
 
 export const routes: Routes = [
-  {
-    path: 'customers',
-    component: CustomersComponent
-  },
-
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  { path: 'dashboard', component: DashboardComponent },
+  { path: 'customers', component: CustomerListComponent },
+  { path: 'accounts/:accountId', component: AccountDetailsComponent }
 ];
