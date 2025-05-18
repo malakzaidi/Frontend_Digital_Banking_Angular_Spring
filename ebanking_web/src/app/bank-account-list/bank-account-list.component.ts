@@ -131,6 +131,7 @@ export class BankAccountListComponent implements OnInit {
   displayedColumns: string[] = ['id', 'balance', 'customerId', 'customerName', 'type', 'actions'];
   searchKeyword: string = '';
   private searchSubject = new Subject<string>();
+  private customerMap: Map<number, string> = new Map();
 
   constructor(
     private bankingService: BankingService,
@@ -172,6 +173,13 @@ export class BankAccountListComponent implements OnInit {
       next: customers => {
         this.customers = customers;
         console.log('Loaded customers for name display:', customers);
+
+        // Create a map for faster lookup
+        this.customerMap.clear();
+        customers.forEach(customer => {
+          // @ts-ignore
+          return this.customerMap.set(customer.id, customer.name);
+        });
       },
       error: err => {
         console.error('Load customers error:', err);
@@ -180,6 +188,12 @@ export class BankAccountListComponent implements OnInit {
   }
 
   getCustomerName(customerId: number): string {
+    // First check the map for faster lookup
+    if (this.customerMap.has(customerId)) {
+      return this.customerMap.get(customerId)!;
+    }
+
+    // Fallback to array search if map fails
     const customer = this.customers.find(c => c.id === customerId);
     return customer ? customer.name : `Customer #${customerId}`;
   }

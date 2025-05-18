@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import {BankingService} from '../services/banking.service';
+import { BankingService, CustomerDTO } from '../services/banking.service';
 
 interface AccountForm {
   type: 'current' | 'saving';
@@ -44,8 +44,12 @@ interface AccountForm {
         <input matInput type="number" [(ngModel)]="account.interestRate" name="interestRate" min="0" step="0.01" required>
       </mat-form-field>
       <mat-form-field>
-        <mat-label>Customer ID</mat-label>
-        <input matInput type="number" [(ngModel)]="account.customerId" name="customerId" min="1" required>
+        <mat-label>Customer</mat-label>
+        <mat-select [(ngModel)]="account.customerId" name="customerId" required>
+          <mat-option *ngFor="let customer of customers" [value]="customer.id">
+            {{ customer.name }} (ID: {{ customer.id }})
+          </mat-option>
+        </mat-select>
       </mat-form-field>
       <button mat-raised-button color="primary" type="submit" [disabled]="!isFormValid()">Save</button>
       <button mat-raised-button color="accent" type="button" (click)="cancel()">Cancel</button>
@@ -66,6 +70,7 @@ export class BankAccountFormComponent implements OnInit {
     customerId: 0
   };
   error: string | null = null;
+  customers: CustomerDTO[] = [];
 
   constructor(
     private bankingService: BankingService,
@@ -74,6 +79,25 @@ export class BankAccountFormComponent implements OnInit {
 
   ngOnInit() {
     console.log('BankAccountFormComponent: ngOnInit');
+    this.loadCustomers();
+  }
+
+  loadCustomers() {
+    this.bankingService.getCustomers().subscribe({
+      next: (customers: CustomerDTO[]) => {
+        this.customers = customers;
+        console.log('Loaded customers:', customers);
+        // Set default customer if we have any
+        if (customers.length > 0) {
+          // @ts-ignore
+          this.account.customerId = customers[0].id;
+        }
+      },
+      error: (err: any) => {
+        console.error('Failed to load customers:', err);
+        this.error = `Failed to load customers: ${err.status || 'Unknown'} ${err.statusText || err.message}`;
+      }
+    });
   }
 
   isFormValid(): boolean {
@@ -102,6 +126,7 @@ export class BankAccountFormComponent implements OnInit {
     const observable = this.account.type === 'current'
       ? this.bankingService.saveCurrentBankAccount(this.account.initialBalance, this.account.overDraft!, this.account.customerId)
       : this.bankingService.saveSavingBankAccount(this.account.initialBalance, this.account.interestRate!, this.account.customerId);
+
     // @ts-ignore
     observable.subscribe({
       next: (response: any) => {
