@@ -10,12 +10,7 @@
           <mat-select [(ngModel)]="operationType" name="operationType">
             <mat-option value="CREDIT">Credit</mat-option>
             <mat-option value="DEBIT">Debit</mat-option>
-            <mat-option value="TRANSFER">Transfer</mat-option>
           </mat-select>
-        </mat-form-field>
-        <mat-form-field *ngIf="operationType === 'TRANSFER'">
-          <mat-label>To Account ID</mat-label>
-          <input matInput [(ngModel)]="toAccountId" name="toAccountId" required>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Amount</mat-label>

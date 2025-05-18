@@ -1,11 +1,12 @@
 import { Component, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { BankingService } from '../../services/banking.service';
+
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import { TransactionFormComponent } from '../transaction-form/transaction-form.component';
+import {BankingService} from '../services/banking.service';
 
 @Component({
   selector: 'app-account-details',

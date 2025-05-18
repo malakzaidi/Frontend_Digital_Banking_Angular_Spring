@@ -1,5 +1,4 @@
 import { Component, signal } from '@angular/core';
-import { BankingService } from '../../services/banking.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDialogModule } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import {BankingService} from '../services/banking.service';
 
 @Component({
   selector: 'app-customer-list',
