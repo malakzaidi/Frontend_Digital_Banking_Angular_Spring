@@ -19,4 +19,11 @@ export const routes: Routes = [
   { path: 'accounts/history/:id', component: AccountHistoryComponent },
   { path: 'transactions', component: TransactionFormComponent },
   { path: 'transfer', component: TransferFormComponent }
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'change-password', component: ChangePasswordComponent, canActivate: [authGuard] },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
+  { path: 'admin/customers', component: CustomersComponent, canActivate: [authGuard, adminGuard] },
+  { path: '', redirectTo: '/login', pathMatch: 'full' }
+
 ];
