@@ -12,6 +12,7 @@ import { BankAccountDTO, BankingService, CustomerDTO } from '../services/banking
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
+
 @Component({
   selector: 'app-bank-account-list',
   standalone: true,
