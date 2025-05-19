@@ -6,6 +6,11 @@ import {BankAccountFormComponent} from './bank-account-form/bank-account-form.co
 import {TransactionFormComponent} from './transaction-form/transaction-form.component';
 import {AccountHistoryComponent} from './account-history/account-history.component';
 import {TransferFormComponent} from './transfer-form/transfer-form.component';
+import { LoginComponent } from './login/login.component';
+import { RegisterComponent } from './login/register.component';
+import { ChangePasswordComponent } from './change-password/change-password';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import {authGuard} from './services/auth.guard';
 
 
 export const routes: Routes = [
@@ -18,12 +23,11 @@ export const routes: Routes = [
   { path: 'accounts/edit/:id', component: BankAccountFormComponent },
   { path: 'accounts/history/:id', component: AccountHistoryComponent },
   { path: 'transactions', component: TransactionFormComponent },
-  { path: 'transfer', component: TransferFormComponent }
+  { path: 'transfer', component: TransferFormComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'change-password', component: ChangePasswordComponent, canActivate: [authGuard] },
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
-  { path: 'admin/customers', component: CustomersComponent, canActivate: [authGuard, adminGuard] },
   { path: '', redirectTo: '/login', pathMatch: 'full' }
 
 ];
