@@ -1,14 +1,15 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject, ChangeDetectorRef } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
+import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { BankingService, CustomerDTO } from '../services/banking.service';
+import { AuthService } from '../services/auth.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -18,63 +19,71 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
   imports: [
     MatTableModule,
     MatButtonModule,
+    RouterLink,
     CommonModule,
     MatInputModule,
     MatFormFieldModule,
-    MatIconModule,
-    FormsModule
+    FormsModule,
+    MatIconModule
   ],
   template: `
     <div class="container">
-      <h2>Customers</h2>
+      <ng-container *ngIf="authService.decodeToken()?.roles.includes('ROLE_ADMIN'); else userView">
+        <h2>Customers</h2>
 
-      <div class="search-container">
-        <mat-form-field appearance="outline" class="full-width search-field">
-          <mat-label>Search Customers</mat-label>
-          <input matInput [(ngModel)]="searchKeyword" (input)="onSearchChange($event)" placeholder="Search by ID, name or email">
-          <mat-icon matPrefix>search</mat-icon>
-          <button *ngIf="searchKeyword" matSuffix mat-icon-button aria-label="Clear" (click)="clearSearch()">
-            <mat-icon>close</mat-icon>
-          </button>
-        </mat-form-field>
-      </div>
+        <div class="search-container">
+          <mat-form-field appearance="outline" class="full-width search-field">
+            <mat-label>Search Customers</mat-label>
+            <input matInput [(ngModel)]="searchKeyword" (input)="onSearchChange($event)" placeholder="Search by name or email">
+            <mat-icon matPrefix>search</mat-icon>
+            <button *ngIf="searchKeyword" matSuffix mat-icon-button aria-label="Clear" (click)="clearSearch()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
 
-      <div class="button-row">
-        <button mat-raised-button color="primary" (click)="addCustomer()">Add Customer</button>
-      </div>
+        <div class="table-container mat-elevation-z8">
+          <table mat-table [dataSource]="customers" *ngIf="customers.length > 0 || isLoading">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef>ID</th>
+              <td mat-cell *matCellDef="let customer">{{ customer.id }}</td>
+            </ng-container>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let customer">{{ customer.name }}</td>
+            </ng-container>
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>Email</th>
+              <td mat-cell *matCellDef="let customer">{{ customer.email }}</td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let customer">
+                <button mat-raised-button color="primary" [routerLink]="['/customers/edit', customer.id]">Edit</button>
+                <button mat-raised-button color="warn" (click)="deleteCustomer(customer.id)">Delete</button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
 
-      <div *ngIf="loading" class="loading">Loading customers...</div>
-      <div *ngIf="!loading && customers.length === 0" class="no-results">No customers found.</div>
+        <div *ngIf="customers.length === 0 && !isLoading" class="no-results">
+          No customers found. Try a different search term or refresh the page.
+        </div>
 
-      <div class="table-container mat-elevation-z8" *ngIf="customers.length > 0">
-        <table mat-table [dataSource]="customers">
-          <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef> ID </th>
-            <td mat-cell *matCellDef="let customer"> {{ customer.id }} </td>
-          </ng-container>
+        <div class="button-container">
+          <button mat-raised-button color="primary" routerLink="/customers/new">Add Customer</button>
+        </div>
+      </ng-container>
 
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef> Name </th>
-            <td mat-cell *matCellDef="let customer"> {{ customer.name }} </td>
-          </ng-container>
-
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef> Email </th>
-            <td mat-cell *matCellDef="let customer"> {{ customer.email }} </td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef> Actions </th>
-            <td mat-cell *matCellDef="let customer">
-              <button mat-raised-button color="primary" (click)="editCustomer(customer.id)">Edit</button>
-              <button mat-raised-button color="warn" (click)="deleteCustomer(customer.id)">Delete</button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
-      </div>
+      <ng-template #userView>
+        <div class="unauthorized-message">
+          <h2>Unauthorized Access</h2>
+          <p>You do not have permission to manage customers.</p>
+          <button mat-raised-button color="primary" routerLink="/login">Back to Login</button>
+        </div>
+      </ng-template>
     </div>
   `,
   styles: [`
@@ -97,9 +106,6 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
       width: 100%;
       margin-bottom: 20px;
     }
-    .button-row {
-      margin-bottom: 20px;
-    }
     .full-width {
       width: 100%;
     }
@@ -111,32 +117,41 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
       background-color: white;
       border: 1px solid #ddd;
     }
-    .loading {
-      padding: 20px;
-      text-align: center;
-      color: #666;
-    }
     .no-results {
       text-align: center;
       margin: 20px 0;
       font-style: italic;
       color: #666;
     }
+    .button-container {
+      margin-top: 20px;
+    }
+    .unauthorized-message {
+      text-align: center;
+      margin-top: 50px;
+    }
+    .unauthorized-message h2 {
+      color: #d32f2f;
+    }
+    .unauthorized-message p {
+      margin: 20px 0;
+    }
   `]
 })
 export class CustomerListComponent implements OnInit {
   customers: CustomerDTO[] = [];
   displayedColumns: string[] = ['id', 'name', 'email', 'actions'];
-  loading: boolean = true;
   searchKeyword: string = '';
   private searchSubject = new Subject<string>();
+  isLoading: boolean = true;
 
   constructor(
+    public authService: AuthService, // Changed from private to public
     private bankingService: BankingService,
     private router: Router,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private cdr: ChangeDetectorRef
   ) {
-    // Set up debounce for search to avoid too many API calls
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged()
@@ -146,31 +161,38 @@ export class CustomerListComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log('CustomerListComponent: ngOnInit');
+    const tokenPayload = this.authService.decodeToken();
+    const isAdmin = tokenPayload?.roles?.includes('ROLE_ADMIN') || false;
+
+    if (!isAdmin) {
+      console.warn('Unauthorized access attempt to CustomerListComponent');
+      this.router.navigate(['/unauthorized']);
+      return;
+    }
+
     if (isPlatformBrowser(this.platformId)) {
-      console.log('CustomerListComponent: Running in browser, fetching customers');
       this.loadAllCustomers();
     } else {
-      console.log('CustomerListComponent: Running on server, skipping HTTP request');
-      this.loading = false;
+      console.log('Skipping customers fetch on server-side');
+      this.isLoading = false;
     }
   }
 
   loadAllCustomers() {
-    this.loading = true;
+    this.isLoading = true;
     this.bankingService.getCustomers().subscribe({
-      next: customers => {
+      next: (customers: CustomerDTO[]) => {
         this.customers = customers;
-        this.loading = false;
-        console.log('CustomerListComponent: Customers loaded with full details:', JSON.stringify(customers));
-        // Check if emails exist in the data
-        const hasEmails = customers.some(customer => customer.email !== undefined && customer.email !== null);
-        console.log('CustomerListComponent: Data has email values:', hasEmails);
+        console.log('Loaded customers:', customers);
+        this.isLoading = false;
+        this.cdr.detectChanges();
       },
-      error: err => {
-        this.loading = false;
-        console.error('CustomerListComponent: Error loading customers:', err);
-        this.bankingService.showError(`Failed to load customers: ${err.message || err}`);
+      error: (err: any) => {
+        console.error('Load customers error:', err);
+        this.bankingService.showError(`Failed to load customers: ${err.status || 'Unknown error'}`);
+        this.customers = [];
+        this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -191,42 +213,41 @@ export class CustomerListComponent implements OnInit {
       return;
     }
 
-    this.loading = true;
+    this.isLoading = true;
     console.log('Searching customers with keyword:', keyword);
     this.bankingService.searchCustomers(keyword).subscribe({
-      next: customers => {
+      next: (customers: CustomerDTO[]) => {
         this.customers = customers;
-        this.loading = false;
         console.log('Search results:', customers);
+        this.isLoading = false;
+        this.cdr.detectChanges();
       },
-      error: err => {
-        this.loading = false;
+      error: (err: any) => {
         console.error('Search customers error:', err);
         this.bankingService.showError(`Failed to search customers: ${err.status} ${err.statusText}`);
+        this.customers = [];
+        this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  addCustomer() {
-    console.log('CustomerListComponent: Navigating to add customer');
-    this.router.navigate(['/customers/new']);
-  }
-
-  editCustomer(id: number) {
-    console.log('CustomerListComponent: Navigating to edit customer:', id);
-    this.router.navigate(['/customers/edit', id]);
-  }
-
   deleteCustomer(id: number) {
-    console.log('CustomerListComponent: Deleting customer:', id);
     if (confirm('Are you sure you want to delete this customer?')) {
+      console.log('Deleting customer:', id);
       this.bankingService.deleteCustomer(id).subscribe({
         next: () => {
-          this.customers = this.customers.filter(c => c.id !== id);
-          console.log('CustomerListComponent: Customer deleted:', id);
+          console.log('Customer deleted:', id);
+          this.bankingService.showSuccess('Customer deleted successfully');
+          if (this.searchKeyword && this.searchKeyword.trim() !== '') {
+            this.searchCustomers(this.searchKeyword);
+          } else {
+            this.loadAllCustomers();
+          }
         },
-        error: err => {
-          console.error('CustomerListComponent: Delete error:', err);
+        error: (err: any) => {
+          console.error('Delete customer error:', err);
+          this.bankingService.showError(`Failed to delete customer: ${err.status} ${err.statusText}`);
         }
       });
     }

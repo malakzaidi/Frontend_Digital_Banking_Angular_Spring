@@ -51,12 +51,19 @@ export class LoginComponent {
         if (response && response.token) {
           console.log('Login successful, token:', response.token);
           localStorage.setItem('token', response.token);
-          this.router.navigate(['/customers']);
+          // Add token validation before redirecting
+          const tokenPayload = this.authService.decodeToken();
+          if (tokenPayload && tokenPayload.roles?.includes('ROLE_ADMIN')) {
+            this.router.navigate(['/customers']);
+          } else {
+            this.errorMessage = 'You do not have admin access. Please log in with an admin account.';
+            localStorage.removeItem('token'); // Clear invalid token
+          }
         } else {
           this.errorMessage = 'Unexpected response format';
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Login error:', err);
         this.errorMessage = err.error?.message || 'Login failed';
         if (err.error instanceof SyntaxError) {

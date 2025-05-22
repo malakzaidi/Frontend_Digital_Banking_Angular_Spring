@@ -1,70 +1,63 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8085/api/auth';
-  private tokenKey = 'auth-token';
-  private userKey = 'auth-user';
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
-  login(credentials: { usernameOrEmail: string; password: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
-      tap((response: any) => {
-        if (response.token) {
-          localStorage.setItem(this.tokenKey, response.token);
-          const user = this.decodeToken(response.token);
-          localStorage.setItem(this.userKey, JSON.stringify(user));
-        }
-      })
-    );
+  login(credentials: { usernameOrEmail: string, password: string }): Observable<any> {
+    // Send exactly what the backend expects
+    const body = {
+      usernameOrEmail: credentials.usernameOrEmail,
+      password: credentials.password
+    };
+
+    console.log('AuthService: Sending login request');
+    console.log('URL:', `${this.apiUrl}/auth/login`);
+    console.log('Body:', { ...body, password: '[HIDDEN]' });
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    return this.http.post(`${this.apiUrl}/auth/login`, body, { headers });
   }
 
-  register(data: { username: string; email: string; password: string; firstName: string; lastName: string; role: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, data);
+  register(user: { username: string, email: string, password: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/register`, user);
   }
 
-  changePassword(data: { currentPassword: string; newPassword: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/change-password`, data);
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
-  }
-
-  getUser(): any {
-    const user = localStorage.getItem(this.userKey);
-    return user ? JSON.parse(user) : null;
-  }
-
-  isLoggedIn(): boolean {
-    return !!this.getToken();
-  }
-
-  isAdmin(): boolean {
-    const user = this.getUser();
-    return user && user.roles && user.roles.includes('ROLE_ADMIN');
+  changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/change-password`, { currentPassword, newPassword });
   }
 
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
+    localStorage.removeItem('token');
   }
 
-  private decodeToken(token: string): any {
+  getToken(): string | null {
+    return localStorage.getItem('token');
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.getToken();
+  }
+
+  decodeToken(): any {
+    const token = this.getToken();
+    if (!token) return null;
+
     try {
       const payload = token.split('.')[1];
-      const decoded = JSON.parse(atob(payload));
-      return {
-        username: decoded.sub,
-        roles: decoded.roles || []
-      };
-    } catch (e) {
-      console.error('Error decoding token:', e);
+      return JSON.parse(atob(payload));
+    } catch (error) {
+      console.error('Error decoding token:', error);
       return null;
     }
   }

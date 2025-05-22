@@ -7,26 +7,29 @@ import { TransactionFormComponent } from './transaction-form/transaction-form.co
 import { AccountHistoryComponent } from './account-history/account-history.component';
 import { TransferFormComponent } from './transfer-form/transfer-form.component';
 import { LoginComponent } from './login/login.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
 import { HomeComponent } from './home/home.component';
-import { authGuard } from './services/auth.guard';
+import { AuthGuard } from './guards/auth.guard';
+import { AdminGuard } from './guards/admin.guard';
 import {ChangePasswordComponent} from './change-password/change-password';
 import {RegisterComponent} from './register/register.component';
+import {UnauthorizedComponent} from './unauthorized/unauthorized.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
-  { path: 'change-password', component: ChangePasswordComponent, canActivate: [authGuard] },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
-  { path: 'customers', component: CustomerListComponent, canActivate: [authGuard] },
-  { path: 'customers/new', component: CustomerFormComponent, canActivate: [authGuard] },
-  { path: 'customers/edit/:id', component: CustomerFormComponent, canActivate: [authGuard] },
-  { path: 'accounts', component: BankAccountListComponent, canActivate: [authGuard] },
-  { path: 'accounts/new', component: BankAccountFormComponent, canActivate: [authGuard] },
-  { path: 'accounts/edit/:id', component: BankAccountFormComponent, canActivate: [authGuard] },
-  { path: 'accounts/history/:id', component: AccountHistoryComponent, canActivate: [authGuard] },
-  { path: 'transactions', component: TransactionFormComponent, canActivate: [authGuard] },
-  { path: 'transfer', component: TransferFormComponent, canActivate: [authGuard] },
+  { path: 'change-password', component: ChangePasswordComponent, canActivate: [AuthGuard] },
+  { path: 'customers', component: CustomerListComponent, canActivate: [AuthGuard] },
+  { path: 'customers/new', component: CustomerFormComponent, canActivate: [AuthGuard] },
+  { path: 'customers/edit/:id', component: CustomerFormComponent, canActivate: [AuthGuard] },
+  { path: 'accounts', component: BankAccountListComponent, canActivate: [AuthGuard] },
+  { path: 'accounts/new', component: BankAccountFormComponent, canActivate: [AuthGuard] },
+  { path: 'accounts/edit/:id', component: BankAccountFormComponent, canActivate: [AuthGuard] },
+  { path: 'accounts/history/:id', component: AccountHistoryComponent, canActivate: [AuthGuard] },
+  { path: 'transactions', component: TransactionFormComponent, canActivate: [AuthGuard] },
+  { path: 'transfer', component: TransferFormComponent, canActivate: [AuthGuard] },
+  { path: 'dashboard', component: CustomerListComponent, canActivate: [AuthGuard,AdminGuard ] },
+  { path: 'unauthorized', component: UnauthorizedComponent },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }
 ];

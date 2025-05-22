@@ -1,45 +1,55 @@
-<div style="padding: 16px;">
-  <mat-card style="padding: 24px; margin-bottom: 16px;">
+<div class="container">
+  <h2>Account Details</h2>
+
+  <!-- Account Details Card -->
+  <mat-card class="account-card">
     <mat-card-header>
-      <mat-card-title>Account Details</mat-card-title>
+      <mat-card-title>Account ID: {{ account().id }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p><strong>ID:</strong> {{account().id}}</p>
-      <p><strong>Balance:</strong> {{account().balance | currency}}</p>
-      <p><strong>Type:</strong> {{account().type}}</p>
-      <p><strong>Customer:</strong> {{account().customer?.name}}</p>
+      <p><strong>Balance:</strong> {{ account().balance | currency }}</p>
+      <p><strong>Type:</strong> {{ account().type }}</p>
+      <p><strong>Customer ID:</strong> {{ account().customerId }}</p>
+      <p *ngIf="account().customerName"><strong>Customer Name:</strong> {{ account().customerName }}</p>
     </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" [routerLink]="['/accounts']">Back to Accounts</button>
+    </mat-card-actions>
   </mat-card>
-  <mat-card style="padding: 24px; margin-bottom: 16px;">
-    <mat-card-header>
-      <mat-card-title>Transactions</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <mat-table [dataSource]="operations()">
-        <ng-container matColumnDef="id">
-          <mat-header-cell *matHeaderCellDef>ID</mat-header-cell>
-          <mat-cell *matCellDef="let op">{{op.id}}</mat-cell>
-        </ng-container>
-        <ng-container matColumnDef="date">
-          <mat-header-cell *matHeaderCellDef>Date</mat-header-cell>
-          <mat-cell *matCellDef="let op">{{op.operationDate | date}}</mat-cell>
-        </ng-container>
-        <ng-container matColumnDef="type">
-          <mat-header-cell *matHeaderCellDef>Type</mat-header-cell>
-          <mat-cell *matCellDef="let op">{{op.type}}</mat-cell>
-        </ng-container>
-        <ng-container matColumnDef="amount">
-          <mat-header-cell *matHeaderCellDef>Amount</mat-header-cell>
-          <mat-cell *matCellDef="let op">{{op.amount | currency}}</mat-cell>
-        </ng-container>
-        <ng-container matColumnDef="description">
-          <mat-header-cell *matHeaderCellDef>Description</mat-header-cell>
-          <mat-cell *matCellDef="let op">{{op.description}}</mat-cell>
-        </ng-container>
-        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-        <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-      </mat-table>
-    </mat-card-content>
-  </mat-card>
-  <app-transaction-form [accountId]="account().id"></app-transaction-form>
+
+  <!-- Operations Table -->
+  <h3>Transaction History</h3>
+  <div class="table-container">
+    <table mat-table [dataSource]="operations()" *ngIf="operations().length > 0; else noOperations">
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef>ID</th>
+        <td mat-cell *matCellDef="let operation">{{ operation.id }}</td>
+      </ng-container>
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Date</th>
+        <td mat-cell *matCellDef="let operation">{{ operation.operationDate | date:'medium' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef>Type</th>
+        <td mat-cell *matCellDef="let operation">{{ operation.type }}</td>
+      </ng-container>
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef>Amount</th>
+        <td mat-cell *matCellDef="let operation">{{ operation.amount | currency }}</td>
+      </ng-container>
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Description</th>
+        <td mat-cell *matCellDef="let operation">{{ operation.description }}</td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    <ng-template #noOperations>
+      <p>No operations found for this account.</p>
+    </ng-template>
+  </div>
+
+  <!-- Transaction Form -->
+  <h3>Perform Transaction</h3>
+  <app-transaction-form></app-transaction-form>
 </div>

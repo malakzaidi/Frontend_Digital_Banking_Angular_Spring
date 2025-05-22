@@ -46,10 +46,12 @@ export class ChangePasswordComponent {
     this.message = '';
     this.error = false;
     console.log('Changing password with:', this.passwordData); // Debug
-    this.authService.changePassword(this.passwordData).subscribe({
+    this.authService.changePassword(this.passwordData.currentPassword, this.passwordData.newPassword).subscribe({
       next: (res: any) => {
         this.message = res.message || 'Password changed successfully';
         this.error = false;
+        // Optionally redirect after success
+        setTimeout(() => this.authService.logout(), 2000); // Logout after 2 seconds
       },
       error: (err) => {
         console.error('Change password error:', err);

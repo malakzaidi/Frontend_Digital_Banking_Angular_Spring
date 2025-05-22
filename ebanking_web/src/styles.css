@@ -4,4 +4,13 @@ html, body {
   height: 100%;
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+  .error-snackbar {
+    background-color: #d32f2f;
+    color: white;
+  }
+
+  .success-snackbar {
+    background-color: #388e3c;
+    color: white;
+  }
 }
