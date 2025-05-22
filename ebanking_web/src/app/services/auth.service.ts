@@ -47,7 +47,7 @@ export class AuthService {
 
   isAdmin(): boolean {
     const user = this.getUser();
-    return user && user.roles.includes('ROLE_ADMIN');
+    return user && user.roles && user.roles.includes('ROLE_ADMIN');
   }
 
   logout(): void {
@@ -56,7 +56,16 @@ export class AuthService {
   }
 
   private decodeToken(token: string): any {
-    const payload = token.split('.')[1];
-    return JSON.parse(atob(payload));
+    try {
+      const payload = token.split('.')[1];
+      const decoded = JSON.parse(atob(payload));
+      return {
+        username: decoded.sub,
+        roles: decoded.roles || []
+      };
+    } catch (e) {
+      console.error('Error decoding token:', e);
+      return null;
+    }
   }
 }

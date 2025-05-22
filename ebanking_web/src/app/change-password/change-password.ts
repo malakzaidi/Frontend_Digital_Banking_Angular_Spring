@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {AuthService} from '../services/auth.service';
-
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-change-password',
@@ -44,13 +43,17 @@ export class ChangePasswordComponent {
   constructor(private authService: AuthService) {}
 
   changePassword() {
+    this.message = '';
+    this.error = false;
+    console.log('Changing password with:', this.passwordData); // Debug
     this.authService.changePassword(this.passwordData).subscribe({
-      next: (res) => {
-        this.message = res;
+      next: (res: any) => {
+        this.message = res.message || 'Password changed successfully';
         this.error = false;
       },
       error: (err) => {
-        this.message = err.error || 'Error changing password';
+        console.error('Change password error:', err);
+        this.message = err.error?.message || 'Error changing password';
         this.error = true;
       }
     });

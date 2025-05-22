@@ -1,29 +1,29 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import {AuthService} from '../services/auth.service';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="container">
       <h2>Sign In</h2>
       <form (ngSubmit)="login()">
         <div>
           <label>Username or Email</label>
-          <input type="text" [(ngModel)]="credentials.usernameOrEmail" name="usernameOrEmail" required>
+          <input type="text" [(ngModel)]="loginData.usernameOrEmail" name="usernameOrEmail" required>
         </div>
         <div>
           <label>Password</label>
-          <input type="password" [(ngModel)]="credentials.password" name="password" required>
+          <input type="password" [(ngModel)]="loginData.password" name="password" required>
         </div>
         <button type="submit">Login</button>
         <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
       </form>
-      <p>Don't have an account? <a routerLink="/register">Sign Up</a></p>
+      <p>Don’t have an account? <a routerLink="/register">Sign Up</a></p>
     </div>
   `,
   styles: [`
@@ -37,18 +37,31 @@ import {AuthService} from '../services/auth.service';
   `]
 })
 export class LoginComponent {
-  credentials = { usernameOrEmail: '', password: '' };
+  loginData = { usernameOrEmail: '', password: '' };
   errorMessage = '';
 
   constructor(private authService: AuthService, private router: Router) {}
 
   login() {
-    this.authService.login(this.credentials).subscribe({
-      next: () => {
-        this.router.navigate(['/dashboard']);
+    this.errorMessage = '';
+    console.log('Logging in with:', this.loginData);
+    this.authService.login(this.loginData).subscribe({
+      next: (response: any) => {
+        console.log('Login response:', response);
+        if (response && response.token) {
+          console.log('Login successful, token:', response.token);
+          localStorage.setItem('token', response.token);
+          this.router.navigate(['/customers']);
+        } else {
+          this.errorMessage = 'Unexpected response format';
+        }
       },
       error: (err) => {
-        this.errorMessage = 'Invalid credentials';
+        console.error('Login error:', err);
+        this.errorMessage = err.error?.message || 'Login failed';
+        if (err.error instanceof SyntaxError) {
+          this.errorMessage = 'Server returned invalid response';
+        }
       }
     });
   }

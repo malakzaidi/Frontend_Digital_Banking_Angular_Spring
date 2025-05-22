@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import {AuthService} from '../services/auth.service';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="container">
       <h2>Sign Up</h2>
@@ -62,12 +62,28 @@ export class RegisterComponent {
   constructor(private authService: AuthService, private router: Router) {}
 
   register() {
-    this.authService.register(this.registerData).subscribe({
-      next: () => {
-        this.router.navigate(['/login']);
+    this.errorMessage = '';
+    const payload = {
+      ...this.registerData,
+      roles: [this.registerData.role]
+    };
+    console.log('Registering with:', payload);
+    this.authService.register(payload).subscribe({
+      next: (response: any) => {
+        console.log('Registration response:', response);
+        if (response && response.message) {
+          console.log('Registration successful:', response.message);
+          this.router.navigate(['/login']);
+        } else {
+          this.errorMessage = 'Unexpected response format';
+        }
       },
       error: (err) => {
-        this.errorMessage = err.error || 'Registration failed';
+        console.error('Register error:', err);
+        this.errorMessage = err.error?.message || 'Registration failed';
+        if (err.error instanceof SyntaxError) {
+          this.errorMessage = 'Server returned invalid response';
+        }
       }
     });
   }
