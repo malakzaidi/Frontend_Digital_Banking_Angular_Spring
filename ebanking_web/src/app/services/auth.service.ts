@@ -15,51 +15,42 @@ export class AuthService {
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
-  login(credentials: { usernameOrEmail: string, password: string }): Observable<any> {
+  login(credentials: { usernameOrEmail: string; password: string }): Observable<any> {
     const body = {
-      usernameOrEmail: credentials.usernameOrEmail, // Fixed: was 'username', should be 'usernameOrEmail'
+      usernameOrEmail: credentials.usernameOrEmail,
       password: credentials.password
     };
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-
-    console.log('Sending login request with body:', {
-      usernameOrEmail: body.usernameOrEmail,
-      password: '***'
-    });
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
     return this.http.post(`${this.apiUrl}/auth/login`, body, { headers });
   }
 
-  register(user: { username: string, email: string, password: string, firstName?: string, lastName?: string, roles?: string[] }): Observable<any> {
+  register(user: {
+    username: string;
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    roles?: string[];
+  }): Observable<any> {
     const body = {
       username: user.username,
       email: user.email,
       password: user.password,
       firstName: user.firstName || '',
       lastName: user.lastName || '',
-      roles: user.roles || ['USER'] // Default role
+      roles: user.roles || ['USER']
     };
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
     return this.http.post(`${this.apiUrl}/auth/register`, body, { headers });
   }
 
-  changePassword(currentPassword: string, newPassword: string): Observable<any> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.getToken()}`
-    });
-
-    return this.http.post(`${this.apiUrl}/change-password`,
-      { currentPassword, newPassword },
-      { headers }
-    );
+  changePassword(data: { currentPassword: string; newPassword: string }, token: string): Observable<any> {
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    return this.http.put(`${this.apiUrl}/auth/change-password`, data, { headers });
   }
 
   logout(): void {
@@ -69,66 +60,40 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem('token');
-    }
-    return null;
+    return isPlatformBrowser(this.platformId) ? localStorage.getItem('token') : null;
   }
 
   isAuthenticated(): boolean {
     const token = this.getToken();
-    if (!token) {
-      return false;
-    }
+    if (!token) return false;
 
-    // Check if token is expired
     try {
       const payload = this.decodeToken();
-      if (payload && payload.exp) {
-        const currentTime = Math.floor(Date.now() / 1000);
-        return payload.exp > currentTime;
-      }
-    } catch (error) {
-      console.error('Error checking token expiration:', error);
+      if (!payload || !payload.exp) return false;
+      return payload.exp > Math.floor(Date.now() / 1000);
+    } catch {
       return false;
     }
-
-    return !!token;
   }
 
   decodeToken(): any {
     const token = this.getToken();
-    if (!token) {
-      console.warn('No token found');
-      return null;
-    }
+    if (!token) return null;
 
     try {
-      const payload = token.split('.')[1];
-      if (!payload) {
-        console.error('Invalid token format');
-        return null;
-      }
-
-      const decoded = JSON.parse(atob(payload));
-      console.log('Decoded token:', decoded);
-      return decoded;
-    } catch (error) {
-      console.error('Error decoding token:', error);
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload;
+    } catch {
       return null;
     }
   }
 
-  // Helper method to get user info from token
   getCurrentUser(): any {
     const payload = this.decodeToken();
-    if (payload) {
-      return {
-        username: payload.sub,
-        roles: payload.roles || [],
-        exp: payload.exp
-      };
-    }
-    return null;
+    return payload ? { username: payload.sub, roles: payload.roles || [], exp: payload.exp } : null;
+  }
+
+  isTokenExpired(exp: number): boolean {
+    return Date.now() >= exp * 1000;
   }
 }

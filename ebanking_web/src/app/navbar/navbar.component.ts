@@ -11,18 +11,31 @@ import { isPlatformBrowser } from '@angular/common';
   standalone: true,
   imports: [CommonModule, RouterLink, MatToolbarModule, MatButtonModule],
   template: `
-    <mat-toolbar class="navbar">
+    <mat-toolbar class="navbar" *ngIf="authService.isAuthenticated()">
       <span class="logo">Digital Banking</span>
       <div class="nav-links">
-        <a *ngIf="authService.isAuthenticated()" routerLink="/home">Home</a>
-        <a *ngIf="authService.isAuthenticated() && isAdmin()" routerLink="/dashboard">Dashboard</a>
-        <a *ngIf="authService.isAuthenticated()" routerLink="/accounts">Accounts</a>
-        <a *ngIf="authService.isAuthenticated()" routerLink="/transactions">Transactions</a>
-        <a *ngIf="authService.isAuthenticated()" routerLink="/transfer">Transfer</a>
-        <a *ngIf="authService.isAuthenticated()" routerLink="/change-password">Change Password</a>
-        <a *ngIf="authService.isAuthenticated()" (click)="logout()">Logout</a>
-        <a *ngIf="!authService.isAuthenticated()" routerLink="/login">Login</a>
-        <a *ngIf="!authService.isAuthenticated()" routerLink="/register">Register</a>
+        <!-- User Links -->
+        <ng-container *ngIf="!isAdmin()">
+          <a routerLink="/home">Home</a>
+          <a routerLink="/accounts">Accounts</a>
+          <a routerLink="/transaction-history">Transaction History</a>
+          <a routerLink="/transfer">Transfer</a>
+          <a routerLink="/bill-payment">Pay Bills</a>
+          <a routerLink="/transactions">Transactions</a>
+          <a routerLink="/profile">Profile</a>
+          <a routerLink="/change-password">Change Password</a>
+          <a (click)="logout()">Logout</a>
+        </ng-container>
+        <!-- Admin Links -->
+        <ng-container *ngIf="isAdmin()">
+          <a routerLink="/dashboard">Dashboard</a>
+          <a routerLink="/customers">Customers</a>
+          <a routerLink="/accounts">Accounts</a>
+          <a routerLink="/transactions">Transactions</a>
+          <a routerLink="/transfer">Transfers</a>
+          <a routerLink="/change-password">Change Password</a>
+          <a (click)="logout()">Logout</a>
+        </ng-container>
       </div>
     </mat-toolbar>
   `,
@@ -51,6 +64,7 @@ import { isPlatformBrowser } from '@angular/common';
       font-weight: 400;
       color: #FFFFFF;
       transition: color 0.3s ease;
+      cursor: pointer;
     }
     .nav-links a:hover {
       color: #FF6F61;
@@ -86,6 +100,6 @@ export class NavbarComponent {
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/home']);
   }
 }

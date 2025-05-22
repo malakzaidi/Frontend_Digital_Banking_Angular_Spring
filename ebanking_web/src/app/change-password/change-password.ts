@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-change-password',
@@ -9,54 +11,97 @@ import { AuthService } from '../services/auth.service';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="container">
-      <h2>Change Password</h2>
-      <form (ngSubmit)="changePassword()">
-        <div>
-          <label>Current Password</label>
-          <input type="password" [(ngModel)]="passwordData.currentPassword" name="currentPassword" required>
-        </div>
-        <div>
-          <label>New Password</label>
-          <input type="password" [(ngModel)]="passwordData.newPassword" name="newPassword" required>
-        </div>
-        <button type="submit">Change Password</button>
-        <p *ngIf="message" [ngClass]="{'success': !error, 'error': error}">{{ message }}</p>
-      </form>
+      <div class="card change-password-card">
+        <h2>Change Password</h2>
+        <form (ngSubmit)="changePassword()">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" [(ngModel)]="passwordData.currentPassword" name="currentPassword" required />
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" [(ngModel)]="passwordData.newPassword" name="newPassword" required />
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" [(ngModel)]="passwordData.confirmPassword" name="confirmPassword" required />
+          </div>
+          <button type="submit" [disabled]="isLoading">
+            {{ isLoading ? 'Changing Password...' : 'Change Password' }}
+          </button>
+          <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+        </form>
+      </div>
     </div>
   `,
   styles: [`
-    .container { max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
-    div { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; }
-    input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    button:hover { background-color: #0056b3; }
-    .success { color: green; }
-    .error { color: red; }
+    .change-password-card { max-width: 400px; margin: 50px auto; text-align: center; }
+    h2 { font-size: 2.2rem; font-weight: 400; }
+    .form-group { margin-bottom: 20px; text-align: left; }
+    label { display: block; margin-bottom: 5px; font-weight: 500; color: #333333; font-family: 'Roboto', sans-serif; }
+    input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; transition: border-color 0.3s ease; font-family: 'Roboto', sans-serif; }
+    input:focus { border-color: #00695C; outline: none; }
+    button { width: 100%; font-size: 1rem; font-family: 'Roboto', sans-serif; }
+    .error { color: #d32f2f; margin-top: 10px; font-family: 'Roboto', sans-serif; }
   `]
 })
 export class ChangePasswordComponent {
-  passwordData = { currentPassword: '', newPassword: '' };
-  message = '';
-  error = false;
+  passwordData = { currentPassword: '', newPassword: '', confirmPassword: '' };
+  errorMessage = '';
+  isLoading = false;
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   changePassword() {
-    this.message = '';
-    this.error = false;
-    console.log('Changing password with:', this.passwordData); // Debug
-    this.authService.changePassword(this.passwordData.currentPassword, this.passwordData.newPassword).subscribe({
-      next: (res: any) => {
-        this.message = res.message || 'Password changed successfully';
-        this.error = false;
-        // Optionally redirect after success
-        setTimeout(() => this.authService.logout(), 2000); // Logout after 2 seconds
+    this.errorMessage = '';
+    this.isLoading = true;
+
+    if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
+      this.errorMessage = 'New passwords do not match';
+      this.isLoading = false;
+      return;
+    }
+
+    const token = isPlatformBrowser(this.platformId) ? this.authService.getToken() : null;
+
+    if (!token) {
+      this.errorMessage = 'No authentication token found. Please log in.';
+      this.isLoading = false;
+      return;
+    }
+
+    const payload = this.authService.decodeToken();
+
+    if (!payload || this.authService.isTokenExpired(payload.exp)) {
+      this.errorMessage = 'Session expired. Please log in again.';
+      if (isPlatformBrowser(this.platformId)) {
+        localStorage.removeItem('token');
+      }
+      this.router.navigate(['/login']);
+      this.isLoading = false;
+      return;
+    }
+
+    const body = {
+      currentPassword: this.passwordData.currentPassword,
+      newPassword: this.passwordData.newPassword
+    };
+
+    this.authService.changePassword(body, token).subscribe({
+      next: (response: any) => {
+        this.errorMessage = 'Password changed successfully';
+        this.isLoading = false;
+        setTimeout(() => this.router.navigate(['/home']), 2000);
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Change password error:', err);
-        this.message = err.error?.message || 'Error changing password';
-        this.error = true;
+        this.errorMessage =
+          err.error?.message || 'Failed to change password. Please check your current password.';
+        this.isLoading = false;
       }
     });
   }

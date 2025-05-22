@@ -13,10 +13,12 @@ import { AdminGuard } from './guards/admin.guard';
 import { ChangePasswordComponent } from './change-password/change-password';
 import { RegisterComponent } from './register/register.component';
 import { UnauthorizedComponent } from './unauthorized/unauthorized.component';
-import {DashboardComponent} from './dashboard/dashboard.component';
+import { BillPaymentComponent } from './bill-payment/bill-payment.component';
+import { ProfileComponent } from './profile/profile.component';
+import { TransactionHistoryComponent } from './transaction-history/transaction-history.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '', redirectTo: '/home', pathMatch: 'full' },
   { path: 'home', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
@@ -30,7 +32,10 @@ export const routes: Routes = [
   { path: 'accounts/history/:id', component: AccountHistoryComponent, canActivate: [AuthGuard] },
   { path: 'transactions', component: TransactionFormComponent, canActivate: [AuthGuard] },
   { path: 'transfer', component: TransferFormComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard, AdminGuard] },
+  { path: 'dashboard', component: CustomerListComponent, canActivate: [AuthGuard, AdminGuard] },
+  { path: 'bill-payment', component: BillPaymentComponent, canActivate: [AuthGuard] },
+  { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
+  { path: 'transaction-history', component: TransactionHistoryComponent, canActivate: [AuthGuard] },
   { path: 'unauthorized', component: UnauthorizedComponent },
-  { path: '**', redirectTo: '/login' }
+  { path: '**', redirectTo: '/home' }
 ];
