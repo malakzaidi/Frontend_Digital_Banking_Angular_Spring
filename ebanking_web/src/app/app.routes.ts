@@ -10,12 +10,14 @@ import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
 import { AuthGuard } from './guards/auth.guard';
 import { AdminGuard } from './guards/admin.guard';
-import {ChangePasswordComponent} from './change-password/change-password';
-import {RegisterComponent} from './register/register.component';
-import {UnauthorizedComponent} from './unauthorized/unauthorized.component';
+import { ChangePasswordComponent } from './change-password/change-password';
+import { RegisterComponent } from './register/register.component';
+import { UnauthorizedComponent } from './unauthorized/unauthorized.component';
+import {DashboardComponent} from './dashboard/dashboard.component';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'home', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'change-password', component: ChangePasswordComponent, canActivate: [AuthGuard] },
@@ -28,8 +30,7 @@ export const routes: Routes = [
   { path: 'accounts/history/:id', component: AccountHistoryComponent, canActivate: [AuthGuard] },
   { path: 'transactions', component: TransactionFormComponent, canActivate: [AuthGuard] },
   { path: 'transfer', component: TransferFormComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard', component: CustomerListComponent, canActivate: [AuthGuard,AdminGuard ] },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard, AdminGuard] },
   { path: 'unauthorized', component: UnauthorizedComponent },
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }
 ];

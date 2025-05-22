@@ -12,6 +12,7 @@ import { BankingService, CustomerDTO } from '../services/banking.service';
 import { AuthService } from '../services/auth.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { NavbarComponent } from '../navbar/navbar.component';
 
 @Component({
   selector: 'app-customer-list',
@@ -24,11 +25,13 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatInputModule,
     MatFormFieldModule,
     FormsModule,
-    MatIconModule
+    MatIconModule,
+    NavbarComponent
   ],
   template: `
+    <app-navbar></app-navbar>
     <div class="container">
-      <ng-container *ngIf="authService.decodeToken()?.roles.includes('ROLE_ADMIN'); else userView">
+      <ng-container *ngIf="isAdmin; else userView">
         <h2>Customers</h2>
 
         <div class="search-container">
@@ -42,7 +45,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
           </mat-form-field>
         </div>
 
-        <div class="table-container mat-elevation-z8">
+        <div class="table-container card">
           <table mat-table [dataSource]="customers" *ngIf="customers.length > 0 || isLoading">
             <ng-container matColumnDef="id">
               <th mat-header-cell *matHeaderCellDef>ID</th>
@@ -59,8 +62,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>Actions</th>
               <td mat-cell *matCellDef="let customer">
-                <button mat-raised-button color="primary" [routerLink]="['/customers/edit', customer.id]">Edit</button>
-                <button mat-raised-button color="warn" (click)="deleteCustomer(customer.id)">Delete</button>
+                <button mat-raised-button class="action-button" [routerLink]="['/customers/edit', customer.id]">Edit</button>
+                <button mat-raised-button class="action-button delete-button" (click)="deleteCustomer(customer.id)">Delete</button>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -73,7 +76,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
         </div>
 
         <div class="button-container">
-          <button mat-raised-button color="primary" routerLink="/customers/new">Add Customer</button>
+          <button mat-raised-button class="action-button" routerLink="/customers/new">Add Customer</button>
         </div>
       </ng-container>
 
@@ -81,16 +84,15 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
         <div class="unauthorized-message">
           <h2>Unauthorized Access</h2>
           <p>You do not have permission to manage customers.</p>
-          <button mat-raised-button color="primary" routerLink="/login">Back to Login</button>
+          <button mat-raised-button class="action-button" routerLink="/login">Back to Login</button>
         </div>
       </ng-template>
     </div>
   `,
   styles: [`
-    .container {
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
+    h2 {
+      font-size: 2rem;
+      font-weight: 400;
     }
     .table-container {
       overflow-x: auto;
@@ -98,9 +100,23 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     }
     table {
       width: 100%;
+      border-collapse: collapse;
     }
-    button {
-      margin-right: 10px;
+    th, td {
+      padding: 10px;
+      text-align: left;
+      font-family: 'Roboto', sans-serif;
+    }
+    th {
+      background-color: #00695C;
+      color: #FFFFFF;
+    }
+    tr {
+      background-color: #FFFFFF;
+      transition: background-color 0.3s ease;
+    }
+    tr:hover {
+      background-color: #F5F5F5;
     }
     .search-container {
       width: 100%;
@@ -110,21 +126,33 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
       width: 100%;
     }
     .search-field {
-      background-color: #f5f5f5;
-      border-radius: 4px;
-    }
-    .search-field .mat-form-field-flex {
-      background-color: white;
-      border: 1px solid #ddd;
+      background-color: #FFFFFF;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
     .no-results {
       text-align: center;
       margin: 20px 0;
       font-style: italic;
       color: #666;
+      font-family: 'Roboto', sans-serif;
     }
     .button-container {
       margin-top: 20px;
+    }
+    .action-button {
+      background-color: #FF6F61;
+      color: #FFFFFF;
+      font-family: 'Roboto', sans-serif;
+    }
+    .action-button:hover {
+      background-color: #E65A50;
+    }
+    .delete-button {
+      background-color: #d32f2f;
+    }
+    .delete-button:hover {
+      background-color: #b02828;
     }
     .unauthorized-message {
       text-align: center;
@@ -135,6 +163,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     }
     .unauthorized-message p {
       margin: 20px 0;
+      font-family: 'Roboto', sans-serif;
     }
   `]
 })
@@ -144,9 +173,10 @@ export class CustomerListComponent implements OnInit {
   searchKeyword: string = '';
   private searchSubject = new Subject<string>();
   isLoading: boolean = true;
+  isAdmin: boolean = false;
 
   constructor(
-    public authService: AuthService, // Changed from private to public
+    public authService: AuthService,
     private bankingService: BankingService,
     private router: Router,
     @Inject(PLATFORM_ID) private platformId: Object,
@@ -161,21 +191,27 @@ export class CustomerListComponent implements OnInit {
   }
 
   ngOnInit() {
-    const tokenPayload = this.authService.decodeToken();
-    const isAdmin = tokenPayload?.roles?.includes('ROLE_ADMIN') || false;
+    if (!isPlatformBrowser(this.platformId)) {
+      this.isLoading = false;
+      return; // Skip initialization during SSR
+    }
 
-    if (!isAdmin) {
+    const tokenPayload = this.authService.decodeToken();
+    this.isAdmin = tokenPayload?.roles?.includes('ROLE_ADMIN') || false;
+
+    if (!this.authService.isAuthenticated()) {
+      console.warn('User not authenticated, redirecting to login');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    if (!this.isAdmin) {
       console.warn('Unauthorized access attempt to CustomerListComponent');
       this.router.navigate(['/unauthorized']);
       return;
     }
 
-    if (isPlatformBrowser(this.platformId)) {
-      this.loadAllCustomers();
-    } else {
-      console.log('Skipping customers fetch on server-side');
-      this.isLoading = false;
-    }
+    this.loadAllCustomers();
   }
 
   loadAllCustomers() {

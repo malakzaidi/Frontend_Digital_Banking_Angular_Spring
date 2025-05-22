@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { NavbarComponent } from '../navbar/navbar.component';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-login',
@@ -10,37 +12,90 @@ import { AuthService } from '../services/auth.service';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="container">
-      <h2>Sign In</h2>
-      <form (ngSubmit)="login()">
-        <div>
-          <label>Username or Email</label>
-          <input type="text" [(ngModel)]="loginData.usernameOrEmail" name="usernameOrEmail" required>
-        </div>
-        <div>
-          <label>Password</label>
-          <input type="password" [(ngModel)]="loginData.password" name="password" required>
-        </div>
-        <button type="submit">Login</button>
-        <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
-      </form>
-      <p>Don’t have an account? <a routerLink="/register">Sign Up</a></p>
+      <div class="card login-card">
+        <h2>Sign In</h2>
+        <form (ngSubmit)="login()">
+          <div class="form-group">
+            <label>Username or Email</label>
+            <input type="text" [(ngModel)]="loginData.usernameOrEmail" name="usernameOrEmail" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" [(ngModel)]="loginData.password" name="password" required>
+          </div>
+          <button type="submit">Login</button>
+          <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+        </form>
+        <p class="signup-link">Don’t have an account? <a routerLink="/register">Sign Up</a></p>
+      </div>
     </div>
   `,
   styles: [`
-    .container { max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
-    div { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; }
-    input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    button:hover { background-color: #0056b3; }
-    .error { color: red; }
+    .login-card {
+      max-width: 400px;
+      margin: 50px auto;
+      text-align: center;
+    }
+    h2 {
+      font-size: 2.2rem;
+      font-weight: 400;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333333;
+      font-family: 'Roboto', sans-serif;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+      font-family: 'Roboto', sans-serif;
+    }
+    input:focus {
+      border-color: #00695C;
+      outline: none;
+    }
+    button {
+      width: 100%;
+      font-size: 1rem;
+      font-family: 'Roboto', sans-serif;
+    }
+    .error {
+      color: #d32f2f;
+      margin-top: 10px;
+      font-family: 'Roboto', sans-serif;
+    }
+    .signup-link {
+      margin-top: 20px;
+      color: #666;
+      font-family: 'Roboto', sans-serif;
+    }
+    .signup-link a {
+      color: #FF6F61;
+    }
+    .signup-link a:hover {
+      color: #E65A50;
+    }
   `]
 })
 export class LoginComponent {
   loginData = { usernameOrEmail: '', password: '' };
   errorMessage = '';
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   login() {
     this.errorMessage = '';
@@ -50,14 +105,14 @@ export class LoginComponent {
         console.log('Login response:', response);
         if (response && response.token) {
           console.log('Login successful, token:', response.token);
-          localStorage.setItem('token', response.token);
-          // Add token validation before redirecting
+          if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem('token', response.token);
+          }
           const tokenPayload = this.authService.decodeToken();
           if (tokenPayload && tokenPayload.roles?.includes('ROLE_ADMIN')) {
-            this.router.navigate(['/customers']);
+            this.router.navigate(['/dashboard']);
           } else {
-            this.errorMessage = 'You do not have admin access. Please log in with an admin account.';
-            localStorage.removeItem('token'); // Clear invalid token
+            this.router.navigate(['/home']);
           }
         } else {
           this.errorMessage = 'Unexpected response format';

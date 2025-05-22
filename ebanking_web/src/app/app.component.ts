@@ -1,43 +1,23 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { AuthService } from './services/auth.service';
-import { CommonModule } from '@angular/common';
+import { NavbarComponent } from './navbar/navbar.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
+  imports: [RouterOutlet, NavbarComponent],
   template: `
-    <div *ngIf="authService.isAuthenticated(); else notAuthenticated">
+    <app-navbar></app-navbar>
+    <div class="container">
       <router-outlet></router-outlet>
     </div>
-    <ng-template #notAuthenticated>
-      <div class="login-message">
-        <h2>Please Log In</h2>
-        <p>You need to be authenticated to access this application.</p>
-        <a routerLink="/login">Go to Login</a>
-      </div>
-    </ng-template>
   `,
   styles: [`
-    .login-message {
-      text-align: center;
-      margin-top: 50px;
-    }
-    .login-message h2 {
-      color: #d32f2f;
-    }
-    .login-message a {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #1976d2;
-      color: white;
-      text-decoration: none;
-      border-radius: 4px;
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
     }
   `]
 })
-export class AppComponent {
-  constructor(public authService: AuthService) {}
-}
+export class AppComponent {}
