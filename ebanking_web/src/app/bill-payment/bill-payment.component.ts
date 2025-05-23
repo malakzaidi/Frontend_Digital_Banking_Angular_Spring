@@ -27,6 +27,10 @@ import { isPlatformBrowser } from '@angular/common';
           <label for="amount">Amount</label>
           <input id="amount" type="number" [(ngModel)]="billData.amount" name="amount" placeholder="Enter amount" required>
         </div>
+        <div class="form-group">
+          <label for="description">Description</label>
+          <input id="description" type="text" [(ngModel)]="billData.description" name="description" placeholder="e.g., Monthly electricity bill" required>
+        </div>
         <button type="submit">Pay Bill</button>
         <p *ngIf="successMessage" class="success">{{ successMessage }}</p>
         <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
@@ -97,7 +101,7 @@ import { isPlatformBrowser } from '@angular/common';
   `]
 })
 export class BillPaymentComponent {
-  billData = { accountId: '', billerName: '', amount: 0 };
+  billData = { accountId: '', billerName: '', amount: 0, description: '' };
   accounts: any[] = [];
   successMessage = '';
   errorMessage = '';
@@ -114,34 +118,40 @@ export class BillPaymentComponent {
   }
 
   loadAccounts() {
-    this.bankingService.getUserAccounts().subscribe({
-      next: (accounts: any[]) => {
-        this.accounts = accounts;
-      },
-      error: (err: any) => {
-        this.errorMessage = 'Failed to load accounts';
-      }
-    });
+    // Load accounts from localStorage instead of backend
+    this.accounts = JSON.parse(localStorage.getItem('userAccounts') || '[]');
+    if (this.accounts.length === 0) {
+      this.errorMessage = 'No accounts found. Please create an account first.';
+    }
   }
 
   payBill() {
     this.successMessage = '';
     this.errorMessage = '';
-    const body = {
-      accountId: this.billData.accountId,
-      billerName: this.billData.billerName,
-      amount: this.billData.amount,
-      userId: this.getUserId()
-    };
-    this.bankingService.payBill(body).subscribe({
-      next: () => {
-        this.successMessage = 'Bill paid successfully';
-        this.billData = { accountId: '', billerName: '', amount: 0 };
-      },
-      error: (err: any) => {
-        this.errorMessage = err.error?.message || 'Failed to pay bill';
-      }
-    });
+
+    if (!this.billData.accountId || !this.billData.billerName || this.billData.amount <= 0 || !this.billData.description) {
+      this.errorMessage = 'Please fill in all fields with valid data.';
+      return;
+    }
+
+    const selectedAccount = this.accounts.find(account => account.id === this.billData.accountId);
+    if (!selectedAccount) {
+      this.errorMessage = 'Selected account not found.';
+      return;
+    }
+
+    if (selectedAccount.balance < this.billData.amount) {
+      this.errorMessage = 'Insufficient balance to pay this bill.';
+      return;
+    }
+
+    // Simulate bill payment by updating balance
+    selectedAccount.balance -= this.billData.amount;
+    localStorage.setItem('userAccounts', JSON.stringify(this.accounts));
+
+    this.successMessage = 'Bill paid successfully!';
+    this.bankingService.showSuccess(this.successMessage);
+    this.billData = { accountId: '', billerName: '', amount: 0, description: '' };
   }
 
   private getUserId(): string {

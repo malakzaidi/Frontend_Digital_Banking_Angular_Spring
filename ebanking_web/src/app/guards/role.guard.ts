@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import {AuthService} from '../services/auth.service';
 
+
 @Injectable({
   providedIn: 'root'
 })
@@ -17,7 +18,7 @@ export class RoleGuard implements CanActivate {
       this.router.navigate(['/unauthorized']);
       return false;
     } else if (expectedRole === 'ROLE_USER' && isAdmin) {
-      this.router.navigate(['/dashboard']); // Redirect admins away from user-only pages
+      this.router.navigate(['/dashboard']);
       return false;
     }
     return true;

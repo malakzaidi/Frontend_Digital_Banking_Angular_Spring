@@ -39,12 +39,12 @@ export interface AccountOperationDTO {
 }
 
 export interface AccountHistoryDTO {
-  accountId: string;
+  operations: AccountOperationDTO[];
   balance: number;
   currentPage: number;
   pageSize: number;
+  totalOperations: number;
   totalPages: number;
-  accountOperationDTOS: AccountOperationDTO[];
 }
 
 export interface CreditDTO {
@@ -75,4 +75,36 @@ export interface TransactionHistoryDTO {
   amount: number;
   date: string;
   performedBy: string;
+}
+
+export interface UserAccountRequestDTO {
+  initialBalance: number;
+}
+
+export interface UserTransactionDTO {
+  amount: number;
+  description: string;
+}
+
+export interface UserTransferDTO {
+  recipientIdentifier: string;
+  amount: number;
+}
+
+export interface BillPaymentDTO {
+  accountId: string;
+  billerName: string;
+  amount: number;
+  description: string;
+  userId: string;
+}
+export interface DashboardDTO {
+  totalCustomers: number;
+  totalAccounts: number;
+  totalBalance: number;
+  recentTransactions: AccountOperationDTO[];
+  currentPage: number;
+  pageSize: number;
+  totalTransactions: number;
+  totalPages: number;
 }

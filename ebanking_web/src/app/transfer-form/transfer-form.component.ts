@@ -1,158 +1,156 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatSelectModule } from '@angular/material/select';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { BankingService } from '../services/banking.service';
-import { AuthService } from '../services/auth.service';
-import { BlockchainService } from '../services/blockchain.service';
-import { BankAccountDTO, TransferRequestDTO } from '../banking-dtos';
-
-interface TransferForm {
-  accountIdSource: string;
-  accountIdDestination: string;
-  amount: number;
-}
 
 @Component({
-  selector: 'app-transfer-form',
+  selector: 'app-transfer',
   standalone: true,
-  imports: [MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, FormsModule, CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
-    <div class="container">
-      <h2>Transfer Money</h2>
-      <div *ngIf="error" class="error">{{ error }}</div>
-      <form (ngSubmit)="submitTransfer()">
-        <mat-form-field appearance="outline">
-          <mat-label>From Account</mat-label>
-          <mat-select [(ngModel)]="form.accountIdSource" name="accountIdSource" required>
-            <mat-option *ngFor="let account of accounts" [value]="account.id">
-              {{ account.id }} ({{ account.type }} - {{ account.balance | currency }})
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>To Account</mat-label>
-          <input matInput [(ngModel)]="form.accountIdDestination" name="accountIdDestination" placeholder="Enter recipient account ID" required>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Amount</mat-label>
-          <input matInput type="number" [(ngModel)]="form.amount" name="amount" min="0" step="0.01" required>
-        </mat-form-field>
-        <button mat-raised-button color="primary" type="submit" [disabled]="!isFormValid()">Transfer</button>
-        <button mat-raised-button color="accent" type="button" (click)="cancel()">Cancel</button>
+    <div class="transfer">
+      <h2>Transfer Funds</h2>
+      <form (ngSubmit)="performTransfer()">
+        <div class="form-group">
+          <label for="fromAccount">From Account</label>
+          <select id="fromAccount" [(ngModel)]="transferData.fromAccountId" name="fromAccountId" required>
+            <option value="" disabled>Select source account</option>
+            <option *ngFor="let account of accounts" [value]="account.id">{{ account.id }} - {{ account.type }} ({{ account.balance | currency }})</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="toAccount">To Account</label>
+          <select id="toAccount" [(ngModel)]="transferData.toAccountId" name="toAccountId" required>
+            <option value="" disabled>Select destination account</option>
+            <option *ngFor="let account of accounts" [value]="account.id">{{ account.id }} - {{ account.type }} ({{ account.balance | currency }})</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="amount">Amount</label>
+          <input id="amount" type="number" [(ngModel)]="transferData.amount" name="amount" placeholder="Enter amount" required>
+        </div>
+        <button type="submit">Transfer</button>
+        <p *ngIf="successMessage" class="success">{{ successMessage }}</p>
+        <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
       </form>
     </div>
   `,
   styles: [`
-    .container {
+    .transfer {
+      max-width: 600px;
+      margin: 50px auto;
       padding: 20px;
-      max-width: 400px;
-      margin: 0 auto;
-      background: #f9f9f9;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      background-color: #FFFFFF;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
     h2 {
+      font-size: 2.2rem;
+      font-weight: 400;
       text-align: center;
-      color: #333;
+      color: #00695C;
     }
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+    .form-group {
+      margin-bottom: 20px;
     }
-    .error {
-      color: red;
-      text-align: center;
-      margin-bottom: 10px;
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333333;
+      font-family: 'Roboto', sans-serif;
     }
-    mat-form-field {
+    input, select {
       width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+      font-family: 'Roboto', sans-serif;
+    }
+    input:focus, select:focus {
+      border-color: #00695C;
+      outline: none;
     }
     button {
-      margin-right: 10px;
+      width: 100%;
+      padding: 10px;
+      background-color: #FF6F61;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      font-family: 'Roboto', sans-serif;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #E65A50;
+    }
+    .success {
+      color: #00695C;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .error {
+      color: #d32f2f;
+      text-align: center;
+      margin-top: 10px;
     }
   `]
 })
-export class TransferFormComponent implements OnInit {
-  form: TransferForm = {
-    accountIdSource: '',
-    accountIdDestination: '',
-    amount: 0
-  };
-  accounts: BankAccountDTO[] = [];
-  error: string | null = null;
-  userId: string = '';
+export class TransferComponent implements OnInit {
+  transferData = { fromAccountId: '', toAccountId: '', amount: 0 };
+  accounts: any[] = [];
+  successMessage = '';
+  errorMessage = '';
 
-  constructor(
-    private bankingService: BankingService,
-    private authService: AuthService,
-    private blockchainService: BlockchainService,
-    private router: Router
-  ) {}
+  constructor(private bankingService: BankingService) {}
 
   ngOnInit() {
-    const tokenPayload = this.authService.decodeToken();
-    this.userId = tokenPayload?.sub || '';
     this.loadAccounts();
   }
 
   loadAccounts() {
-    this.bankingService.getUserAccounts().subscribe({
-      next: (accounts: BankAccountDTO[]) => {
-        this.accounts = accounts;
-        if (accounts.length > 0) {
-          this.form.accountIdSource = accounts[0].id!;
-        }
-      },
-      error: (err) => {
-        this.error = 'Failed to load accounts: ' + (err.message || 'Unknown error');
-      }
-    });
+    this.accounts = JSON.parse(localStorage.getItem('userAccounts') || '[]');
+    if (this.accounts.length === 0) {
+      this.errorMessage = 'No accounts found. Please create an account first.';
+    }
   }
 
-  isFormValid(): boolean {
-    return !!this.form.accountIdSource && !!this.form.accountIdDestination && this.form.amount > 0;
-  }
+  performTransfer() {
+    this.successMessage = '';
+    this.errorMessage = '';
 
-  submitTransfer(): void {
-    if (!this.isFormValid()) {
-      this.bankingService.showError('Please fill all required fields with valid values');
+    if (!this.transferData.fromAccountId || !this.transferData.toAccountId || this.transferData.amount <= 0) {
+      this.errorMessage = 'Please fill in all fields with valid data.';
       return;
     }
 
-    const transfer: TransferRequestDTO = {
-      accountIdSource: this.form.accountIdSource,
-      accountIdDestination: this.form.accountIdDestination,
-      amount: this.form.amount,
-      userId: this.userId
-    };
+    if (this.transferData.fromAccountId === this.transferData.toAccountId) {
+      this.errorMessage = 'Source and destination accounts must be different.';
+      return;
+    }
 
-    this.bankingService.transfer(transfer).subscribe({
-      next: (response: any) => {
-        // Log the transfer in the blockchain ledger
-        this.blockchainService.addTransaction({
-          type: 'transfer',
-          from: this.form.accountIdSource,
-          to: this.form.accountIdDestination,
-          amount: this.form.amount,
-          userId: this.userId,
-          timestamp: new Date().toISOString()
-        });
-        this.bankingService.showSuccess('Transfer successful');
-        this.router.navigate(['/my-accounts']);
-      },
-      error: (err) => {
-        this.error = 'Failed to process transfer: ' + (err.message || 'Unknown error');
-      }
-    });
-  }
+    const fromAccount = this.accounts.find(account => account.id === this.transferData.fromAccountId);
+    const toAccount = this.accounts.find(account => account.id === this.transferData.toAccountId);
 
-  cancel() {
-    this.router.navigate(['/my-accounts']);
+    if (!fromAccount || !toAccount) {
+      this.errorMessage = 'One or both accounts not found.';
+      return;
+    }
+
+    if (fromAccount.balance < this.transferData.amount) {
+      this.errorMessage = 'Insufficient balance in the source account.';
+      return;
+    }
+
+    // Perform the transfer
+    fromAccount.balance -= this.transferData.amount;
+    toAccount.balance += this.transferData.amount;
+
+    localStorage.setItem('userAccounts', JSON.stringify(this.accounts));
+    this.successMessage = 'Transfer completed successfully!';
+    this.bankingService.showSuccess(this.successMessage);
+    this.transferData = { fromAccountId: '', toAccountId: '', amount: 0 };
   }
 }

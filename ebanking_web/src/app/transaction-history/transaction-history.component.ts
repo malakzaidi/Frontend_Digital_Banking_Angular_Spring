@@ -1,104 +1,84 @@
-import { Component, PLATFORM_ID, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { BankingService } from '../services/banking.service';
-import { isPlatformBrowser } from '@angular/common';
+import { TransactionHistoryDTO } from '../banking-dtos';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-transaction-history',
   standalone: true,
-  imports: [CommonModule],
+  imports: [MatTableModule, MatPaginatorModule, CommonModule],
   template: `
-    <div class="transaction-history">
+    <div class="container">
       <h2>Transaction History</h2>
-      <div *ngIf="transactions.length > 0; else noTransactions">
-        <table class="transaction-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Account ID</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Performed By</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let transaction of transactions">
-              <td>{{ transaction.id }}</td>
-              <td>{{ transaction.accountId }}</td>
-              <td>{{ transaction.type }}</td>
-              <td>{{ transaction.amount | currency }}</td>
-              <td>{{ transaction.date | date:'medium' }}</td>
-              <td>{{ transaction.performedBy }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <ng-template #noTransactions>
-        <p>No transactions found.</p>
-      </ng-template>
+      <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let element">{{ element.date | date }}</td>
+        </ng-container>
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <td mat-cell *matCellDef="let element">{{ element.type }}</td>
+        </ng-container>
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef>Amount</th>
+          <td mat-cell *matCellDef="let element">{{ element.amount }}</td>
+        </ng-container>
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Description</th>
+          <td mat-cell *matCellDef="let element">{{ element.description }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+      <mat-paginator [pageSizeOptions]="[5, 10, 25]" (page)="onPageChange($event)" showFirstLastButtons></mat-paginator>
     </div>
   `,
   styles: [`
-    .transaction-history {
-      max-width: 1000px;
-      margin: 50px auto;
+    .container {
       padding: 20px;
-      background-color: #FFFFFF;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 800px;
+      margin: 0 auto;
     }
     h2 {
-      font-size: 2.2rem;
-      font-weight: 400;
       text-align: center;
-      color: #00695C;
+      color: #333;
     }
-    .transaction-table {
+    table {
       width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    .transaction-table th, .transaction-table td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-      font-family: 'Roboto', sans-serif;
-    }
-    .transaction-table th {
-      background-color: #00695C;
-      color: #FFFFFF;
-    }
-    p {
-      text-align: center;
-      font-size: 1.1rem;
-      color: #666;
-      font-family: 'Roboto', sans-serif;
+      margin-bottom: 20px;
     }
   `]
 })
-export class TransactionHistoryComponent {
-  transactions: any[] = [];
+export class TransactionHistoryComponent implements OnInit {
+  dataSource: TransactionHistoryDTO[] = [];
+  displayedColumns: string[] = ['date', 'type', 'amount', 'description'];
+  page = 0;
+  size = 10;
+  totalElements = 0;
 
-  constructor(
-    private bankingService: BankingService,
-    @Inject(PLATFORM_ID) private platformId: Object
-  ) {}
+  constructor(private bankingService: BankingService) {}
 
   ngOnInit() {
-    if (isPlatformBrowser(this.platformId)) {
-      this.loadTransactions();
-    }
+    this.loadTransactionHistory();
   }
 
-  private loadTransactions() {
-    this.bankingService.getTransactionHistory().subscribe({
-      next: (transactions: any[]) => {
-        this.transactions = transactions;
+  loadTransactionHistory() {
+    this.bankingService.getTransactionHistory(this.page, this.size).subscribe({
+      next: (response: TransactionHistoryDTO[]) => {
+        this.dataSource = response;
       },
-      error: (err: any) => {
+      error: (err) => {
         console.error('Error loading transaction history:', err);
+        this.bankingService.showError('Failed to load transaction history');
       }
     });
+  }
+
+  onPageChange(event: any) {
+    this.page = event.pageIndex;
+    this.size = event.pageSize;
+    this.loadTransactionHistory();
   }
 }

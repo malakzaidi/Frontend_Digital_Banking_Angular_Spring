@@ -1,19 +1,22 @@
-import { Component, PLATFORM_ID, Inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, Inject, PLATFORM_ID, OnInit } from '@angular/core';
+import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { isPlatformBrowser } from '@angular/common';
+import { BankingService } from '../services/banking.service';
+import { BankAccountDTO } from '../banking-dtos';
+import { Observable, catchError, of, map, OperatorFunction } from 'rxjs';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, CurrencyPipe],
   template: `
     <div class="homepage">
       <!-- Header Section with Sign Up/Sign In -->
       <header class="header">
         <div class="logo">Digital Banking</div>
-        <div class="auth-buttons">
+        <div class="auth-buttons" *ngIf="!authService.isAuthenticated()">
           <a routerLink="/login" class="auth-btn sign-in">Sign In</a>
           <a routerLink="/register" class="auth-btn sign-up">Sign Up</a>
         </div>
@@ -31,68 +34,28 @@ import { isPlatformBrowser } from '@angular/common';
       <!-- Role-Based Dashboard (After Login) -->
       <section class="dashboard" *ngIf="authService.isAuthenticated()">
         <h2>Welcome, {{ userName }}!</h2>
-        <p class="dashboard-subtitle">Explore your banking options below.</p>
+        <p class="dashboard-subtitle">Check your quick stats and alerts below.</p>
 
-        <!-- User Dashboard -->
-        <div class="options" *ngIf="!isAdmin()">
-          <div class="option-card">
-            <h3>My Accounts</h3>
-            <p>View your account details and balances.</p>
-            <a routerLink="/accounts" class="action-btn">Go to Accounts</a>
-          </div>
-          <div class="option-card">
-            <h3>Transaction History</h3>
-            <p>Check your past transactions.</p>
-            <a routerLink="/transaction-history" class="action-btn">View History</a>
-          </div>
-          <div class="option-card">
-            <h3>Transfer Funds</h3>
-            <p>Send money to other accounts securely.</p>
-            <a routerLink="/transfer" class="action-btn">Transfer Now</a>
-          </div>
-          <div class="option-card">
-            <h3>Pay Bills</h3>
-            <p>Pay your bills quickly and easily.</p>
-            <a routerLink="/bill-payment" class="action-btn">Pay Bills</a>
-          </div>
-          <div class="option-card">
-            <h3>Make a Transaction</h3>
-            <p>Record a new transaction.</p>
-            <a routerLink="/transactions" class="action-btn">New Transaction</a>
-          </div>
-          <div class="option-card">
-            <h3>My Profile</h3>
-            <p>View and update your personal information.</p>
-            <a routerLink="/profile" class="action-btn">View Profile</a>
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+          <div class="stat-card">
+            <h3>Total Balance</h3>
+            <p *ngIf="totalBalance$ | async as totalBalance; else loading">
+              {{ totalBalance | currency:'USD' }}
+            </p>
+            <ng-template #loading>
+              <p>Loading...</p>
+            </ng-template>
           </div>
         </div>
 
-        <!-- Admin Dashboard -->
-        <div class="options admin-options" *ngIf="isAdmin()">
-          <div class="option-card">
-            <h3>Dashboard</h3>
-            <p>Overview of all banking activities.</p>
-            <a routerLink="/dashboard" class="action-btn">Go to Dashboard</a>
+        <!-- Alerts -->
+        <div class="alerts">
+          <div class="alert-card" *ngIf="showAlert">
+            <p>Alert: You have a pending bill payment due tomorrow!</p>
           </div>
-          <div class="option-card">
-            <h3>Manage Customers</h3>
-            <p>Add, edit, or delete customers.</p>
-            <a routerLink="/customers" class="action-btn">Manage Customers</a>
-          </div>
-          <div class="option-card">
-            <h3>Manage Accounts</h3>
-            <p>Oversee customer accounts.</p>
-            <a routerLink="/accounts" class="action-btn">Manage Accounts</a>
-          </div>
-          <div class="option-card">
-            <h3>Manage Transactions</h3>
-            <p>Review and manage transactions.</p>
-            <a routerLink="/transactions" class="action-btn">Manage Transactions</a>
-          </div>
-          <div class="option-card">
-            <h3>Manage Transfers</h3>
-            <p>Monitor and manage transfers.</p>
-            <a routerLink="/transfer" class="action-btn">Manage Transfers</a>
+          <div class="alert-card" *ngIf="!showAlert">
+            <p>No alerts at this time.</p>
           </div>
         </div>
       </section>
@@ -220,48 +183,40 @@ import { isPlatformBrowser } from '@angular/common';
       color: #666;
       margin-bottom: 40px;
     }
-    .options {
+    .quick-stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
       max-width: 1200px;
-      margin: 0 auto;
+      margin: 0 auto 40px;
     }
-    .admin-options {
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-    .option-card {
+    .stat-card {
       background-color: #FFFFFF;
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
       text-align: center;
     }
-    .option-card:hover {
-      transform: translateY(-5px);
-    }
-    .option-card h3 {
+    .stat-card h3 {
       font-size: 1.5rem;
       margin-bottom: 10px;
       color: #00695C;
     }
-    .option-card p {
-      font-size: 1rem;
-      color: #666;
-      margin-bottom: 15px;
+    .stat-card p {
+      font-size: 1.2rem;
+      color: #333;
     }
-    .action-btn {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #FF6F61;
-      color: #FFFFFF;
+    .alerts {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .alert-card {
+      background-color: #FFF3E0;
+      padding: 15px;
       border-radius: 5px;
-      text-decoration: none;
-      transition: background-color 0.3s ease;
-    }
-    .action-btn:hover {
-      background-color: #E65A50;
+      margin-bottom: 10px;
+      color: #E65100;
+      text-align: center;
     }
     .features {
       padding: 50px 20px;
@@ -302,21 +257,25 @@ import { isPlatformBrowser } from '@angular/common';
       .logo { font-size: 1.5rem; }
       .auth-btn { padding: 8px 15px; }
       .cta-btn { padding: 12px 25px; }
-      .options { grid-template-columns: 1fr; }
     }
   `]
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   userName: string = '';
+  totalBalance$: Observable<number> = of(0);
+  showAlert: boolean = true; // Toggleable for demo; can be dynamic based on backend data
 
   constructor(
     public authService: AuthService,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private bankingService: BankingService,
+    private router: Router
   ) {}
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId) && this.authService.isAuthenticated()) {
       this.loadUserInfo();
+      this.loadTotalBalance();
     }
   }
 
@@ -330,5 +289,17 @@ export class HomeComponent {
     if (tokenPayload) {
       this.userName = tokenPayload.sub || 'User';
     }
+  }
+
+  private loadTotalBalance() {
+    this.totalBalance$ = this.bankingService.getUserAccounts().pipe(
+      catchError(error => {
+        console.error('Error fetching accounts:', error);
+        return of([] as BankAccountDTO[]);
+      }),
+      map((accounts: BankAccountDTO[]): number => {
+        return accounts.reduce((sum: number, acc: BankAccountDTO) => sum + (acc.balance || 0), 0);
+      }) as OperatorFunction<BankAccountDTO[], number>
+    );
   }
 }

@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../services/auth.service';
 import { BankingService } from '../services/banking.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 interface RegisterForm {
   username: string;
@@ -87,35 +88,18 @@ export class RegisterComponent {
       return;
     }
 
-    // Register the user
     this.authService.register(this.form).subscribe({
       next: (response: any) => {
-        const userId = response.userId; // Assumed response structure
-        this.authService.login({ usernameOrEmail: this.form.username, password: this.form.password }).subscribe({
-          next: (loginResponse: any) => {
-            // Create a default saving bank account for the user
-            this.bankingService.saveSavingBankAccount(0, 2.5, userId).subscribe({
-              next: (account: any) => {
-                this.bankingService.showSuccess('Registration successful! A saving account has been created.');
-                this.router.navigate(['/my-accounts']);
-              },
-              error: (err) => {
-                this.error = 'Failed to create bank account: ' + (err.message || 'Unknown error');
-              }
-            });
-          },
-          error: (err) => {
-            this.error = 'Failed to login after registration: ' + (err.message || 'Unknown error');
-          }
-        });
+        this.bankingService.showSuccess('Registration successful! Please log in.');
+        this.router.navigate(['/login']); // Redirect to login after registration
       },
-      error: (err) => {
-        this.error = 'Registration failed: ' + (err.message || 'Unknown error');
+      error: (err: HttpErrorResponse) => {
+        this.error = 'Registration failed: ' + (err.error?.message || err.message || 'Unknown error');
       }
     });
   }
 
   cancel() {
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 }
