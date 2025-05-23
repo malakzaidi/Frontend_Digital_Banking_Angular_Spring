@@ -1,11 +1,12 @@
 import { Component, signal } from '@angular/core';
-import {ActivatedRoute, RouterLink} from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import { TransactionFormComponent } from '../transaction-form/transaction-form.component';
-import { BankingService, BankAccountDTO, AccountOperationDTO } from '../services/banking.service';
+import { AccountOperationDTO, BankAccountDTO } from '../banking-dtos';
+import { BankingService } from '../services/banking.service';
 
 @Component({
   selector: 'app-account-details',
@@ -15,7 +16,8 @@ import { BankingService, BankAccountDTO, AccountOperationDTO } from '../services
   styleUrls: ['./account-details.component.css']
 })
 export class AccountDetailsComponent {
-  account = signal<BankAccountDTO>({ id: '', balance: 0, customerId: 0, type: '' });
+  // Updated initial value to match BankAccountDTO interface
+  account = signal<BankAccountDTO>({ id: '', balance: 0, type: '', customer: undefined });
   operations = signal<AccountOperationDTO[]>([]);
   displayedColumns: string[] = ['id', 'date', 'type', 'amount', 'description'];
 

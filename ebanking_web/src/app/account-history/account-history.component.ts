@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AccountHistoryDTO, AccountOperationDTO, BankingService } from '../services/banking.service';
+import {AccountHistoryDTO, AccountOperationDTO} from '../banking-dtos';
+import {BankingService} from '../services/banking.service';
 
 @Component({
   selector: 'app-account-history',

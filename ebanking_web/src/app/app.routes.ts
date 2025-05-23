@@ -16,6 +16,7 @@ import { UnauthorizedComponent } from './unauthorized/unauthorized.component';
 import { BillPaymentComponent } from './bill-payment/bill-payment.component';
 import { ProfileComponent } from './profile/profile.component';
 import { TransactionHistoryComponent } from './transaction-history/transaction-history.component';
+import {DashboardComponent} from './dashboard/dashboard.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -32,7 +33,7 @@ export const routes: Routes = [
   { path: 'accounts/history/:id', component: AccountHistoryComponent, canActivate: [AuthGuard] },
   { path: 'transactions', component: TransactionFormComponent, canActivate: [AuthGuard] },
   { path: 'transfer', component: TransferFormComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard', component: CustomerListComponent, canActivate: [AuthGuard, AdminGuard] },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard, AdminGuard] },
   { path: 'bill-payment', component: BillPaymentComponent, canActivate: [AuthGuard] },
   { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
   { path: 'transaction-history', component: TransactionHistoryComponent, canActivate: [AuthGuard] },

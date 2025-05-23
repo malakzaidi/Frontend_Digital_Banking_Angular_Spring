@@ -5,7 +5,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BankingService, CustomerDTO } from '../services/banking.service';
+import {CustomerDTO} from '../banking-dtos';
+import {BankingService} from '../services/banking.service';
+
 
 @Component({
   selector: 'app-customer-form',

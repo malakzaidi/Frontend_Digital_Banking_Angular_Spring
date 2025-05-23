@@ -5,14 +5,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator'; // Add Paginator
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { BankAccountDTO, BankingService, CustomerDTO } from '../services/banking.service';
 import { AuthService } from '../services/auth.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { BankAccountDTO, CustomerDTO } from '../banking-dtos';
+import { BankingService } from '../services/banking.service';
 
 @Component({
   selector: 'app-bank-account-list',
@@ -56,11 +57,11 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
             </ng-container>
             <ng-container matColumnDef="customerId">
               <th mat-header-cell *matHeaderCellDef>Customer ID</th>
-              <td mat-cell *matCellDef="let account">{{ account.customerId }}</td>
+              <td mat-cell *matCellDef="let account">{{ account.customer?.id || 'N/A' }}</td>
             </ng-container>
             <ng-container matColumnDef="customerName">
               <th mat-header-cell *matHeaderCellDef>Customer Name</th>
-              <td mat-cell *matCellDef="let account">{{ getCustomerName(account.customerId) }}</td>
+              <td mat-cell *matCellDef="let account">{{ getCustomerName(account.customer?.id) }}</td>
             </ng-container>
             <ng-container matColumnDef="type">
               <th mat-header-cell *matHeaderCellDef>Type</th>
@@ -235,12 +236,9 @@ export class BankAccountListComponent implements OnInit {
     this.isLoading = true;
     this.bankingService.getBankAccounts(this.pageIndex, this.pageSize).subscribe({
       next: (response: { accounts: BankAccountDTO[], total: number }) => {
-        this.accounts = response.accounts.map(account => ({
-          ...account,
-          customerId: Number(account.customerId)
-        }));
-        this.totalAccounts = response.total;
-        console.log('Loaded accounts:', this.accounts.map(a => ({ id: a.id, customerId: a.customerId, type: a.type })));
+        this.accounts = response.accounts || []; // Handle undefined case
+        this.totalAccounts = response.total || 0;
+        console.log('Loaded accounts:', this.accounts.map(a => ({ id: a.id, customerId: a.customer?.id, type: a.type })));
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -308,12 +306,9 @@ export class BankAccountListComponent implements OnInit {
     console.log('Searching accounts with keyword:', keyword);
     this.bankingService.searchBankAccounts(keyword, this.pageIndex, this.pageSize).subscribe({
       next: (response: { accounts: BankAccountDTO[], total: number }) => {
-        this.accounts = response.accounts.map(account => ({
-          ...account,
-          customerId: Number(account.customerId)
-        }));
-        this.totalAccounts = response.total;
-        console.log('Search results:', this.accounts.map(a => ({ id: a.id, customerId: a.customerId, type: a.type })));
+        this.accounts = response.accounts || [];
+        this.totalAccounts = response.total || 0;
+        console.log('Search results:', this.accounts.map(a => ({ id: a.id, customerId: a.customer?.id, type: a.type })));
         this.isLoading = false;
         this.cdr.detectChanges();
       },

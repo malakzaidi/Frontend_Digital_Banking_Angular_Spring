@@ -8,11 +8,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { BankingService, CustomerDTO } from '../services/banking.service';
 import { AuthService } from '../services/auth.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { NavbarComponent } from '../navbar/navbar.component';
+import {CustomerDTO} from '../banking-dtos';
+import {BankingService} from '../services/banking.service';
 
 @Component({
   selector: 'app-customer-list',

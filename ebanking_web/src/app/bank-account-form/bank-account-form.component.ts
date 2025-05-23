@@ -6,7 +6,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { BankingService, CustomerDTO } from '../services/banking.service';
+import {CustomerDTO} from '../banking-dtos';
+import {BankingService} from '../services/banking.service';
+
 
 interface AccountForm {
   type: 'current' | 'saving';

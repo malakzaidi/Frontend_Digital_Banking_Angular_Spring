@@ -6,7 +6,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
-import { BankingService, CreditDTO, DebitDTO } from '../services/banking.service';
+import { BankingService } from '../services/banking.service';
+import { CreditDTO, DebitDTO } from '../banking-dtos';
 
 @Component({
   selector: 'app-transaction-form',
@@ -85,7 +86,8 @@ export class TransactionFormComponent {
       const credit: CreditDTO = {
         accountId: this.transaction.accountId,
         amount: this.transaction.amount,
-        description: this.transaction.description
+        description: this.transaction.description,
+        userId: this.getUserId() // Add userId from BankingService
       };
       this.bankingService.credit(credit).subscribe({
         next: () => {
@@ -101,7 +103,8 @@ export class TransactionFormComponent {
       const debit: DebitDTO = {
         accountId: this.transaction.accountId,
         amount: this.transaction.amount,
-        description: this.transaction.description
+        description: this.transaction.description,
+        userId: this.getUserId() // Add userId for Debit as well (though not required by DebitDTO)
       };
       this.bankingService.debit(debit).subscribe({
         next: () => {
@@ -118,5 +121,10 @@ export class TransactionFormComponent {
 
   cancel() {
     this.router.navigate(['/accounts']);
+  }
+
+  // Helper method to get userId (assuming BankingService has a public method or private access)
+  private getUserId(): string {
+    return (this.bankingService as any)['getUserId']() || ''; // Access private method; consider making it public
   }
 }

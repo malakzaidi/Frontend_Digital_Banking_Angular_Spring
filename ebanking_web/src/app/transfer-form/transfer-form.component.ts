@@ -5,7 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { Router } from '@angular/router';
-import { BankingService, TransferRequestDTO } from '../services/banking.service';
+import { TransferRequestDTO } from '../banking-dtos';
+import { BankingService } from '../services/banking.service';
 
 @Component({
   selector: 'app-transfer-form',
@@ -23,18 +24,18 @@ import { BankingService, TransferRequestDTO } from '../services/banking.service'
       <form (ngSubmit)="performTransfer()">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Source Account ID</mat-label>
-          <input matInput [(ngModel)]="transfer.accountSource" name="accountSource" required>
+          <input matInput [(ngModel)]="transfer.accountIdSource" name="accountIdSource" required>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Destination Account ID</mat-label>
-          <input matInput [(ngModel)]="transfer.accountDestination" name="accountDestination" required>
+          <input matInput [(ngModel)]="transfer.accountIdDestination" name="accountIdDestination" required>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Amount</mat-label>
           <input matInput [(ngModel)]="transfer.amount" name="amount" type="number" required>
         </mat-form-field>
         <div class="button-container">
-          <button mat-raised-button color="primary" type="submit" [disabled]="!transfer.accountSource || !transfer.accountDestination || !transfer.amount">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!transfer.accountIdSource || !transfer.accountIdDestination || !transfer.amount">
             Transfer
           </button>
           <button mat-raised-button color="warn" type="button" (click)="cancel()">Cancel</button>
@@ -60,9 +61,10 @@ import { BankingService, TransferRequestDTO } from '../services/banking.service'
 })
 export class TransferFormComponent {
   transfer: TransferRequestDTO = {
-    accountSource: '',
-    accountDestination: '',
-    amount: 0
+    accountIdSource: '',
+    accountIdDestination: '',
+    amount: 0,
+    userId: ''
   };
 
   constructor(
@@ -71,6 +73,8 @@ export class TransferFormComponent {
   ) {}
 
   performTransfer() {
+    // Set userId before calling the service
+    this.transfer.userId = this.getUserId();
     this.bankingService.transfer(this.transfer).subscribe({
       next: () => {
         this.bankingService.showSuccess('Transfer successful');
@@ -85,5 +89,10 @@ export class TransferFormComponent {
 
   cancel() {
     this.router.navigate(['/accounts']);
+  }
+
+  // Helper method to get userId (assuming BankingService has a public method or private access)
+  private getUserId(): string {
+    return (this.bankingService as any)['getUserId']() || ''; // Access private method; consider making it public
   }
 }
