@@ -1,14 +1,9 @@
-import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { isPlatformBrowser } from '@angular/common';
+import { BankAccountDTO, CurrentBankAccountDTO, SavingBankAccountDTO, CustomerDTO, AccountHistoryDTO, CreditDTO, DebitDTO, TransferRequestDTO, TransactionHistoryDTO } from '../banking-dtos';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import {
-  AccountHistoryDTO, AccountOperationDTO, BankAccountDTO,
-  CreditDTO, CustomerDTO, DebitDTO,
-  TransactionHistoryDTO, TransferRequestDTO
-} from '../banking-dtos';
 
 @Injectable({
   providedIn: 'root'
@@ -16,172 +11,85 @@ import {
 export class BankingService {
   private apiUrl = environment.apiUrl;
 
-  constructor(
-    private http: HttpClient,
-    @Inject(PLATFORM_ID) private platformId: Object,
-    private snackBar: MatSnackBar
-  ) {}
+  constructor(private http: HttpClient, private snackBar: MatSnackBar) {}
 
-  // Utility methods for notifications
-  showSuccess(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      panelClass: ['success-snackbar']
-    });
+  getBankAccounts(page: number, size: number): Observable<{ accounts: BankAccountDTO[], total: number }> {
+    return this.http.get<{ accounts: BankAccountDTO[], total: number }>(`${this.apiUrl}/accounts?page=${page}&size=${size}`);
   }
 
-  showError(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 5000,
-      panelClass: ['error-snackbar']
-    });
+  searchBankAccounts(keyword: string, page: number, size: number): Observable<{ accounts: BankAccountDTO[], total: number }> {
+    return this.http.get<{ accounts: BankAccountDTO[], total: number }>(`${this.apiUrl}/accounts/search?keyword=${keyword}&page=${page}&size=${size}`);
   }
 
-  // Account-related methods
+  saveCurrentBankAccount(initialBalance: number, overDraft: number, customerId: number): Observable<CurrentBankAccountDTO> {
+    return this.http.post<CurrentBankAccountDTO>(`${this.apiUrl}/accounts/current`, { initialBalance, overDraft, customerId });
+  }
+
+  saveSavingBankAccount(initialBalance: number, interestRate: number, customerId: number): Observable<SavingBankAccountDTO> {
+    return this.http.post<SavingBankAccountDTO>(`${this.apiUrl}/accounts/saving`, { initialBalance, interestRate, customerId });
+  }
+
+  getCustomers(): Observable<CustomerDTO[]> {
+    return this.http.get<CustomerDTO[]>(`${this.apiUrl}/customers`);
+  }
+
   getUserAccounts(): Observable<BankAccountDTO[]> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<BankAccountDTO[]>(`${this.apiUrl}/accounts`, { headers });
-  }
-
-  getBankAccounts(page: number, size: number): Observable<{ content: BankAccountDTO[], totalElements: number }> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<{ content: BankAccountDTO[], totalElements: number }>(
-      `${this.apiUrl}/accounts?page=${page}&size=${size}`, { headers }
-    );
-  }
-
-  searchBankAccounts(keyword: string, page: number, size: number): Observable<{ content: BankAccountDTO[], totalElements: number }> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<{ content: BankAccountDTO[], totalElements: number }>(
-      `${this.apiUrl}/accounts/search?keyword=${keyword}&page=${page}&size=${size}`, { headers }
-    );
-  }
-
-  saveCurrentBankAccount(initialBalance: number, overDraft: number, customerId: number): Observable<BankAccountDTO> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    const data = { initialBalance, overDraft, customerId, userId: this.getUserId() };
-    return this.http.post<BankAccountDTO>(`${this.apiUrl}/accounts/current`, data, { headers });
-  }
-
-  saveSavingBankAccount(initialBalance: number, interestRate: number, customerId: number): Observable<BankAccountDTO> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    const data = { initialBalance, interestRate, customerId, userId: this.getUserId() };
-    return this.http.post<BankAccountDTO>(`${this.apiUrl}/accounts/saving`, data, { headers });
-  }
-
-  deleteBankAccount(accountId: string): Observable<void> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.delete<void>(`${this.apiUrl}/accounts/${accountId}`, { headers });
+    return this.http.get<BankAccountDTO[]>(`${this.apiUrl}/accounts/user`);
   }
 
   getPagedAccountHistory(accountId: string, page: number, size: number): Observable<AccountHistoryDTO> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<AccountHistoryDTO>(
-      `${this.apiUrl}/accounts/${accountId}/history?page=${page}&size=${size}`, { headers }
-    );
-  }
-
-  // New method: Fetch account details by accountId
-  getAccountDetails(accountId: string): Observable<BankAccountDTO> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<BankAccountDTO>(`${this.apiUrl}/accounts/${accountId}`, { headers });
-  }
-
-  // New method: Fetch all operations for an account
-  getAccountOperations(accountId: string): Observable<AccountOperationDTO[]> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<AccountOperationDTO[]>(`${this.apiUrl}/accounts/${accountId}/operations`, { headers });
-  }
-
-  // Customer-related methods
-  getCustomers(): Observable<CustomerDTO[]> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<CustomerDTO[]>(`${this.apiUrl}/customers`, { headers });
+    return this.http.get<AccountHistoryDTO>(`${this.apiUrl}/accounts/${accountId}/history?page=${page}&size=${size}`);
   }
 
   searchCustomers(keyword: string): Observable<CustomerDTO[]> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<CustomerDTO[]>(`${this.apiUrl}/customers/search?keyword=${keyword}`, { headers });
+    return this.http.get<CustomerDTO[]>(`${this.apiUrl}/customers/search?keyword=${keyword}`);
   }
 
   getCustomer(id: number): Observable<CustomerDTO> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<CustomerDTO>(`${this.apiUrl}/customers/${id}`, { headers });
+    return this.http.get<CustomerDTO>(`${this.apiUrl}/customers/${id}`);
   }
 
   saveCustomer(customer: CustomerDTO): Observable<CustomerDTO> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    const data = { ...customer, userId: this.getUserId() };
-    return this.http.post<CustomerDTO>(`${this.apiUrl}/customers`, data, { headers });
+    return this.http.post<CustomerDTO>(`${this.apiUrl}/customers`, customer);
   }
 
   updateCustomer(customer: CustomerDTO): Observable<CustomerDTO> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    const data = { ...customer, userId: this.getUserId() };
-    return this.http.put<CustomerDTO>(`${this.apiUrl}/customers/${customer.id}`, data, { headers });
+    return this.http.put<CustomerDTO>(`${this.apiUrl}/customers/${customer.id}`, customer);
   }
 
   deleteCustomer(id: number): Observable<void> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.delete<void>(`${this.apiUrl}/customers/${id}`, { headers });
+    return this.http.delete<void>(`${this.apiUrl}/customers/${id}`);
   }
 
-  // Transaction-related methods
-  payBill(data: { accountId: string, billerName: string, amount: number, userId: string }): Observable<any> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.apiUrl}/bills/pay`, data, { headers });
+  payBill(body: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/bills/pay`, body);
+  }
+
+  credit(credit: CreditDTO): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/accounts/credit`, credit);
+  }
+
+  debit(debit: DebitDTO): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/accounts/debit`, debit);
   }
 
   getTransactionHistory(): Observable<TransactionHistoryDTO[]> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get<TransactionHistoryDTO[]>(`${this.apiUrl}/transactions/history`, { headers });
+    return this.http.get<TransactionHistoryDTO[]>(`${this.apiUrl}/transactions/history`);
   }
 
-  credit(credit: CreditDTO): Observable<void> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post<void>(`${this.apiUrl}/transactions/credit`, credit, { headers });
+  transfer(transfer: TransferRequestDTO): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/accounts/transfer`, transfer);
   }
 
-  debit(debit: DebitDTO): Observable<void> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post<void>(`${this.apiUrl}/transactions/debit`, debit, { headers });
+  deleteBankAccount(accountId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/accounts/${accountId}`);
   }
 
-  transfer(transfer: TransferRequestDTO): Observable<void> {
-    const token = this.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post<void>(`${this.apiUrl}/transfers`, transfer, { headers });
+  showError(message: string): void {
+    this.snackBar.open(message, 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
   }
 
-  private getToken(): string {
-    return isPlatformBrowser(this.platformId) ? localStorage.getItem('token') || '' : '';
-  }
-
-  private getUserId(): string {
-    const token = this.getToken();
-    if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.sub || '';
-    }
-    return '';
+  showSuccess(message: string): void {
+    this.snackBar.open(message, 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
   }
 }

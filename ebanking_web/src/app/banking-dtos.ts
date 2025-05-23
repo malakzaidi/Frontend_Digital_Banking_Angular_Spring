@@ -18,6 +18,16 @@ export interface BankAccountDTO {
   interestRate?: number;
 }
 
+export interface CurrentBankAccountDTO extends Omit<BankAccountDTO, 'type' | 'interestRate'> {
+  type: "CURRENT";
+  overDraft: number; // Required for current accounts
+}
+
+export interface SavingBankAccountDTO extends Omit<BankAccountDTO, 'type' | 'overDraft'> {
+  type: "SAVING";
+  interestRate: number; // Required for saving accounts
+}
+
 export interface AccountOperationDTO {
   id?: number;
   operationDate: string;

@@ -1,130 +1,160 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { BankingService } from '../services/banking.service';
-import { CreditDTO, DebitDTO } from '../banking-dtos';
+import { AuthService } from '../services/auth.service';
+import { BankAccountDTO, CreditDTO, DebitDTO } from '../banking-dtos';
+
+interface TransactionForm {
+  type: 'credit' | 'debit';
+  accountId: string;
+  amount: number;
+  description: string;
+}
 
 @Component({
   selector: 'app-transaction-form',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatButtonModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatSelectModule
-  ],
+  imports: [MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, FormsModule, CommonModule],
   template: `
     <div class="container">
-      <h2>Transaction</h2>
-      <form (ngSubmit)="performTransaction()">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Account ID</mat-label>
-          <input matInput [(ngModel)]="transaction.accountId" name="accountId" required>
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Type</mat-label>
-          <mat-select [(ngModel)]="transaction.type" name="type" required>
-            <mat-option value="Credit">Credit</mat-option>
-            <mat-option value="Debit">Debit</mat-option>
+      <h2>New Transaction</h2>
+      <div *ngIf="error" class="error">{{ error }}</div>
+      <form (ngSubmit)="submitTransaction()">
+        <mat-form-field appearance="outline">
+          <mat-label>Transaction Type</mat-label>
+          <mat-select [(ngModel)]="form.type" name="type" required>
+            <mat-option value="credit">Credit</mat-option>
+            <mat-option value="debit">Debit</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline">
+          <mat-label>Account</mat-label>
+          <mat-select [(ngModel)]="form.accountId" name="accountId" required>
+            <mat-option *ngFor="let account of accounts" [value]="account.id">
+              {{ account.id }} ({{ account.type }} - {{ account.balance | currency }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
           <mat-label>Amount</mat-label>
-          <input matInput [(ngModel)]="transaction.amount" name="amount" type="number" required>
+          <input matInput type="number" [(ngModel)]="form.amount" name="amount" min="0" step="0.01" required>
         </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline">
           <mat-label>Description</mat-label>
-          <input matInput [(ngModel)]="transaction.description" name="description" required>
+          <input matInput [(ngModel)]="form.description" name="description" required>
         </mat-form-field>
-        <div class="button-container">
-          <button mat-raised-button color="primary" type="submit" [disabled]="!transaction.accountId || !transaction.type || !transaction.amount || !transaction.description">
-            Submit
-          </button>
-          <button mat-raised-button color="warn" type="button" (click)="cancel()">Cancel</button>
-        </div>
+        <button mat-raised-button color="primary" type="submit" [disabled]="!isFormValid()">Submit</button>
+        <button mat-raised-button color="accent" type="button" (click)="cancel()">Cancel</button>
       </form>
     </div>
   `,
   styles: [`
     .container {
       padding: 20px;
-      max-width: 500px;
+      max-width: 400px;
       margin: 0 auto;
+      background: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
-    .full-width {
-      width: 100%;
-      margin-bottom: 15px;
+    h2 {
+      text-align: center;
+      color: #333;
     }
-    .button-container {
+    form {
       display: flex;
-      gap: 10px;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .error {
+      color: red;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    mat-form-field {
+      width: 100%;
+    }
+    button {
+      margin-right: 10px;
     }
   `]
 })
-export class TransactionFormComponent {
-  transaction: { accountId: string, type: string, amount: number, description: string } = {
+export class TransactionFormComponent implements OnInit {
+  form: TransactionForm = {
+    type: 'credit',
     accountId: '',
-    type: '',
     amount: 0,
     description: ''
   };
+  accounts: BankAccountDTO[] = [];
+  error: string | null = null;
+  userId: string = '';
 
   constructor(
     private bankingService: BankingService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
-  performTransaction() {
-    if (this.transaction.type === 'Credit') {
-      const credit: CreditDTO = {
-        accountId: this.transaction.accountId,
-        amount: this.transaction.amount,
-        description: this.transaction.description,
-        userId: this.getUserId() // Add userId from BankingService
-      };
-      this.bankingService.credit(credit).subscribe({
-        next: () => {
-          this.bankingService.showSuccess('Credit transaction successful');
-          this.router.navigate(['/accounts']);
-        },
-        error: (err: any) => {
-          console.error('Credit error:', err);
-          this.bankingService.showError('Failed to perform credit transaction');
+  ngOnInit() {
+    const tokenPayload = this.authService.decodeToken();
+    this.userId = tokenPayload?.sub || ''; // Assuming 'sub' contains the userId
+    this.loadAccounts();
+  }
+
+  loadAccounts() {
+    this.bankingService.getUserAccounts().subscribe({
+      next: (accounts: BankAccountDTO[]) => {
+        this.accounts = accounts;
+        if (accounts.length > 0) {
+          this.form.accountId = accounts[0].id!;
         }
-      });
-    } else {
-      const debit: DebitDTO = {
-        accountId: this.transaction.accountId,
-        amount: this.transaction.amount,
-        description: this.transaction.description,
-        userId: this.getUserId() // Add userId for Debit as well (though not required by DebitDTO)
-      };
-      this.bankingService.debit(debit).subscribe({
-        next: () => {
-          this.bankingService.showSuccess('Debit transaction successful');
-          this.router.navigate(['/accounts']);
-        },
-        error: (err: any) => {
-          console.error('Debit error:', err);
-          this.bankingService.showError('Failed to perform debit transaction');
-        }
-      });
+      },
+      error: (err) => {
+        this.error = 'Failed to load accounts: ' + (err.message || 'Unknown error');
+      }
+    });
+  }
+
+  isFormValid(): boolean {
+    return !!this.form.type && !!this.form.accountId && this.form.amount > 0 && !!this.form.description;
+  }
+
+  submitTransaction(): void {
+    if (!this.isFormValid()) {
+      this.bankingService.showError('Please fill all required fields with valid values');
+      return;
     }
+
+    const transaction: CreditDTO | DebitDTO = {
+      accountId: this.form.accountId,
+      amount: this.form.amount,
+      description: this.form.description,
+      userId: this.userId
+    };
+
+    const observable = this.form.type === 'credit'
+      ? this.bankingService.credit(transaction)
+      : this.bankingService.debit(transaction);
+
+    observable.subscribe({
+      next: (response: any) => {
+        this.bankingService.showSuccess(`${this.form.type.charAt(0).toUpperCase() + this.form.type.slice(1)} transaction successful`);
+        this.router.navigate(['/transactions/history']);
+      },
+      error: (err) => {
+        this.error = `Failed to process ${this.form.type} transaction: ` + (err.message || 'Unknown error');
+      }
+    });
   }
 
   cancel() {
-    this.router.navigate(['/accounts']);
-  }
-
-  // Helper method to get userId (assuming BankingService has a public method or private access)
-  private getUserId(): string {
-    return (this.bankingService as any)['getUserId']() || ''; // Access private method; consider making it public
+    this.router.navigate(['/my-accounts']);
   }
 }

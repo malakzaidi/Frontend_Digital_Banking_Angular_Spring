@@ -6,16 +6,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import {CustomerDTO} from '../banking-dtos';
-import {BankingService} from '../services/banking.service';
-
+import { CustomerDTO, BankAccountDTO } from '../banking-dtos';
+import { BankingService } from '../services/banking.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 interface AccountForm {
   type: 'current' | 'saving';
   initialBalance: number;
-  overDraft?: number;
-  interestRate?: number;
-  customerId: number;
+  overDraft: number | null;
+  interestRate: number | null;
+  customerId: number | null;
 }
 
 @Component({
@@ -67,9 +67,9 @@ export class BankAccountFormComponent implements OnInit {
   account: AccountForm = {
     type: 'current',
     initialBalance: 0,
-    overDraft: 0,
-    interestRate: 0,
-    customerId: 0
+    overDraft: null,
+    interestRate: null,
+    customerId: null
   };
   error: string | null = null;
   customers: CustomerDTO[] = [];
@@ -89,13 +89,11 @@ export class BankAccountFormComponent implements OnInit {
       next: (customers: CustomerDTO[]) => {
         this.customers = customers;
         console.log('Loaded customers:', customers);
-        // Set default customer if we have any
-        if (customers.length > 0) {
-          // @ts-ignore
+        if (customers.length > 0 && customers[0].id !== undefined) {
           this.account.customerId = customers[0].id;
         }
       },
-      error: (err: any) => {
+      error: (err: HttpErrorResponse) => {
         console.error('Failed to load customers:', err);
         this.error = `Failed to load customers: ${err.status || 'Unknown'} ${err.statusText || err.message}`;
       }
@@ -103,52 +101,52 @@ export class BankAccountFormComponent implements OnInit {
   }
 
   isFormValid(): boolean {
-    if (!this.account.type || !this.account.customerId) {
+    if (!this.account.type || this.account.customerId === null) {
       return false;
     }
     if (this.account.initialBalance < 0) {
       return false;
     }
-    if (this.account.type === 'current' && (this.account.overDraft == null || this.account.overDraft < 0)) {
+    if (this.account.type === 'current' && (this.account.overDraft === null || this.account.overDraft < 0)) {
       return false;
     }
-    if (this.account.type === 'saving' && (this.account.interestRate == null || this.account.interestRate < 0)) {
+    if (this.account.type === 'saving' && (this.account.interestRate === null || this.account.interestRate < 0)) {
       return false;
     }
     return true;
   }
 
-  saveAccount() {
-    console.log('BankAccountFormComponent: Saving account:', this.account);
+  saveAccount(): void {
     if (!this.isFormValid()) {
-      console.warn('BankAccountFormComponent: Validation failed');
-      this.bankingService.showError('Please fill all required fields correctly');
+      this.bankingService.showError('Please fill all required fields');
       return;
     }
 
-    // Ensure the values are numbers and not undefined
-    const overDraft = this.account.type === 'current' ?
-      (this.account.overDraft || 0) : 0;
+    // Use a common type for the observable to avoid union type issues
+    const saveObservable = this.account.type === 'current'
+      ? this.bankingService.saveCurrentBankAccount(
+        this.account.initialBalance,
+        this.account.overDraft!, // Non-null assertion
+        this.account.customerId! // Non-null assertion
+      )
+      : this.bankingService.saveSavingBankAccount(
+        this.account.initialBalance,
+        this.account.interestRate!, // Non-null assertion
+        this.account.customerId! // Non-null assertion
+      );
 
-    const interestRate = this.account.type === 'saving' ?
-      (this.account.interestRate || 0) : 0;
-
-    const customerId = this.account.customerId || 0;
-
-    const observable = this.account.type === 'current'
-      ? this.bankingService.saveCurrentBankAccount(this.account.initialBalance, overDraft, customerId)
-      : this.bankingService.saveSavingBankAccount(this.account.initialBalance, interestRate, customerId);
-
+    // Treat the response as BankAccountDTO to unify the type
     // @ts-ignore
-    observable.subscribe({
-      next: (response: any) => {
-        console.log('BankAccountFormComponent: Account saved:', response);
+    saveObservable.subscribe({
+      next: (response: BankAccountDTO) => {
+        this.bankingService.showSuccess('Account created successfully');
+        this.account = { type: 'current', initialBalance: 0, overDraft: null, interestRate: null, customerId: null };
         this.router.navigate(['/accounts']);
       },
-      error: (err: { status: any; statusText: any; message: any; }) => {
-        console.error('BankAccountFormComponent: Save error:', err);
-        this.error = `Failed to save account: ${err.status || 'Unknown'} ${err.statusText || err.message}`;
-        this.bankingService.showError(this.error);
+      error: (err: HttpErrorResponse) => {
+        console.error('Failed to save account:', err);
+        this.error = err.message || 'An error occurred';
+        this.bankingService.showError(this.error || 'An error occurred');
       }
     });
   }
