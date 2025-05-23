@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BankingService } from '../services/banking.service';
+import {Router, RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-transaction',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="transaction">
       <h2>Perform Transaction</h2>
@@ -37,6 +38,7 @@ import { BankingService } from '../services/banking.service';
         <button type="submit">Perform Transaction</button>
         <p *ngIf="successMessage" class="success">{{ successMessage }}</p>
         <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+        <button type="button" class="back-btn" [routerLink]="['/dashboard']">Back to My Dashboard</button>
       </form>
     </div>
   `,
@@ -101,6 +103,22 @@ import { BankingService } from '../services/banking.service';
       text-align: center;
       margin-top: 10px;
     }
+    .back-btn {
+      width: 100%;
+      padding: 10px;
+      background-color: #3498db;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      font-family: 'Roboto', sans-serif;
+      cursor: pointer;
+      margin-bottom: 10px;
+      margin-top: 10px; /* Space between buttons */
+    }
+    .back-btn:hover {
+      background-color: #2980b9;
+    }
   `]
 })
 export class TransactionComponent implements OnInit {
@@ -109,7 +127,7 @@ export class TransactionComponent implements OnInit {
   successMessage = '';
   errorMessage = '';
 
-  constructor(private bankingService: BankingService) {}
+  constructor(private bankingService: BankingService, private router: Router) {}
 
   ngOnInit() {
     this.loadAccounts();
@@ -121,6 +139,7 @@ export class TransactionComponent implements OnInit {
       this.errorMessage = 'No accounts found. Please create an account first.';
     }
   }
+
 
   performTransaction() {
     this.successMessage = '';
@@ -153,5 +172,6 @@ export class TransactionComponent implements OnInit {
     this.successMessage = `${this.transactionData.type} transaction completed successfully!`;
     this.bankingService.showSuccess(this.successMessage);
     this.transactionData = { accountId: '', type: '', amount: 0, description: '' };
+    this.router.navigate(['/dashboard']);
   }
 }

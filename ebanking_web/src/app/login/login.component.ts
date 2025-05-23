@@ -34,6 +34,7 @@ interface LoginForm {
         <button mat-raised-button color="primary" type="submit" [disabled]="!isFormValid()">Login</button>
         <button mat-raised-button color="accent" type="button" (click)="cancel()">Cancel</button>
       </form>
+      <p class="link-text">Haven't you registered yet? <a routerLink="/register">Sign up</a></p>
     </div>
   `,
   styles: [`
@@ -50,6 +51,18 @@ interface LoginForm {
     .error {
       color: red;
       margin-bottom: 10px;
+    }
+    .link-text {
+      text-align: center;
+      margin-top: 15px;
+      color: #34495e;
+    }
+    .link-text a {
+      color: #3498db;
+      text-decoration: none;
+    }
+    .link-text a:hover {
+      text-decoration: underline;
     }
   `]
 })
@@ -83,7 +96,7 @@ export class LoginComponent {
           localStorage.setItem('token', response.token);
           const tokenPayload = this.authService.decodeToken();
           const isAdmin = tokenPayload?.roles?.includes('ROLE_ADMIN') || false;
-          const redirectPath = isAdmin ? '/dashboard' : '/my-accounts/new'; // Redirect to create account
+          const redirectPath = isAdmin ? '/dashboard' : '/my-accounts/new';
           this.bankingService.showSuccess('Login successful!');
           this.router.navigate([redirectPath]);
         } else {

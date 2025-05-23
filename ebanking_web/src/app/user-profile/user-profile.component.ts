@@ -28,39 +28,46 @@ interface UserProfile {
       <h2 class="profile-title">My Profile</h2>
       <mat-card class="profile-card">
         <mat-card-header>
-          <mat-card-title>{{ profile?.name || 'User' }}</mat-card-title>
-          <mat-card-subtitle>User ID: {{ profile?.userId }}</mat-card-subtitle>
+          <mat-card-title>{{ profile?.name ?? 'User' }}</mat-card-title>
+          <mat-card-subtitle>User ID: {{ profile?.userId ?? 'N/A' }}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <!-- View Mode -->
           <div *ngIf="!isEditing" class="profile-details">
-            <p><strong>Username:</strong> {{ profile?.username }}</p>
-            <p><strong>Email:</strong> {{ profile?.email || 'N/A' }}</p>
-            <p><strong>Phone:</strong> {{ profile?.phone || 'N/A' }}</p>
-            <p><strong>Address:</strong> {{ profile?.address || 'N/A' }}</p>
-            <p><strong>Account Created:</strong> {{ profile?.createdAt ? (profile.createdAt | date:'medium') : 'N/A' }}</p>
+            <p><strong>Username:</strong> {{ profile?.username ?? 'N/A' }}</p>
+            <p><strong>Email:</strong> {{ profile?.email ?? 'N/A' }}</p>
+            <p><strong>Phone:</strong> {{ profile?.phone ?? 'N/A' }}</p>
+            <p><strong>Address:</strong> {{ profile?.address ?? 'N/A' }}</p>
+            <p><strong>Account
+              Created:</strong> {{ (profile?.createdAt ?? null) ? (profile?.createdAt | date:'medium') : 'N/A' }}</p>
           </div>
 
           <!-- Edit Mode -->
           <form *ngIf="isEditing" (ngSubmit)="saveProfile()" class="edit-form">
             <mat-form-field appearance="outline" class="form-field">
               <mat-label>Name</mat-label>
-              <input matInput [(ngModel)]="profile.name" name="name" required>
+              <input matInput [(ngModel)]="profile!.name" name="name" required>
+              <mat-hint>Required</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline" class="form-field">
               <mat-label>Email</mat-label>
-              <input matInput [(ngModel)]="profile.email" name="email" type="email" required>
+              <input matInput [(ngModel)]="profile!.email" name="email" type="email" required>
+              <mat-hint>Required</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline" class="form-field">
               <mat-label>Phone</mat-label>
-              <input matInput [(ngModel)]="profile.phone" name="phone">
+              <input matInput [(ngModel)]="profile!.phone" name="phone">
+              <mat-hint>Optional</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline" class="form-field">
               <mat-label>Address</mat-label>
-              <input matInput [(ngModel)]="profile.address" name="address">
+              <input matInput [(ngModel)]="profile!.address" name="address">
+              <mat-hint>Optional</mat-hint>
             </mat-form-field>
             <div class="form-actions">
-              <button mat-raised-button color="primary" type="submit">Save</button>
+              <button mat-raised-button color="primary" type="submit" [disabled]="!profile?.name || !profile?.email">
+                Save
+              </button>
               <button mat-raised-button color="warn" type="button" (click)="cancelEdit()">Cancel</button>
             </div>
           </form>
@@ -144,6 +151,10 @@ interface UserProfile {
     }
     .form-field input {
       font-size: 1rem;
+    }
+    mat-hint {
+      font-size: 0.85rem;
+      color: #7f8c8d;
     }
     .form-actions {
       display: flex;
@@ -230,20 +241,21 @@ export class UserProfileComponent implements OnInit {
     const tokenPayload = this.authService.decodeToken();
     if (tokenPayload) {
       this.profile = {
-        userId: tokenPayload.sub || 'N/A',
-        username: tokenPayload.username || 'N/A',
-        email: tokenPayload.email || 'N/A',
-        name: tokenPayload.name || 'N/A',
-        phone: tokenPayload.phone || 'N/A',
-        address: tokenPayload.address || 'N/A',
-        createdAt: tokenPayload.createdAt || 'N/A'
+        userId: tokenPayload.sub ?? 'N/A',
+        username: tokenPayload.username ?? 'N/A',
+        email: tokenPayload.email ?? 'N/A',
+        name: tokenPayload.name ?? 'N/A',
+        phone: tokenPayload.phone,
+        address: tokenPayload.address,
+        createdAt: tokenPayload.createdAt
       };
-      this.originalProfile = { ...this.profile }; // Store original for cancel
+      this.originalProfile = { ...this.profile };
     } else {
       this.bankingService.showError('Failed to load profile data');
+      return;
     }
 
-    // Optionally fetch from backend
+    // Fetch from backend
     this.bankingService.getUserProfile().subscribe({
       next: (profile: UserProfile) => {
         this.profile = profile;
@@ -251,22 +263,40 @@ export class UserProfileComponent implements OnInit {
       },
       error: (err) => {
         console.warn('Failed to fetch profile from backend, using token data:', err);
+        this.bankingService.showError('Failed to fetch profile from backend');
       }
     });
   }
 
   loadAccounts() {
+    const userId = this.profile?.userId ?? '';
+    if (!userId) {
+      this.bankingService.showError('Cannot load accounts: User ID not available');
+      return;
+    }
     const allAccounts = JSON.parse(localStorage.getItem('userAccounts') || '[]');
-    const userId = this.profile?.userId || '';
     this.accounts = allAccounts.filter((account: any) => account.userId === userId);
   }
 
   toggleEdit() {
+    if (!this.profile) {
+      this.bankingService.showError('Cannot edit profile: Profile data not loaded');
+      return;
+    }
     this.isEditing = true;
   }
 
   saveProfile() {
-    if (!this.profile) return;
+    if (!this.profile) {
+      this.bankingService.showError('Cannot save profile: Profile data not loaded');
+      return;
+    }
+
+    // Ensure required fields are present
+    if (!this.profile.name || !this.profile.email) {
+      this.bankingService.showError('Name and Email are required fields');
+      return;
+    }
 
     this.bankingService.updateUserProfile(this.profile).subscribe({
       next: (updatedProfile: UserProfile) => {
@@ -281,11 +311,6 @@ export class UserProfileComponent implements OnInit {
         this.cancelEdit();
       }
     });
-
-    // For now, simulate the update locally
-    this.originalProfile = { ...this.profile };
-    this.isEditing = false;
-    this.bankingService.showSuccess('Profile updated successfully!');
   }
 
   cancelEdit() {

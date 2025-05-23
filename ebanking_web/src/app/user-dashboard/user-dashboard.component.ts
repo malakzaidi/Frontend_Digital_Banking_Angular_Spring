@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { BankingService } from '../services/banking.service';
-import { AccountOperationDTO } from '../banking-dtos';
+import { AccountOperationDTO, TransactionHistoryDTO } from '../banking-dtos';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { CommonModule } from '@angular/common';
@@ -23,6 +23,7 @@ import { Router } from '@angular/router';
         <button class="action-btn" [routerLink]="['/transactions/new']">Perform Transaction</button>
         <button class="action-btn" [routerLink]="['/transfer']">Transfer Funds</button>
         <button class="action-btn" [routerLink]="['/bill-payment']">Pay Bills</button>
+        <button class="action-btn" [routerLink]="['/profile']">Go to Profile</button>
       </div>
 
       <!-- Account Summary -->
@@ -63,6 +64,36 @@ import { Router } from '@angular/router';
                      (page)="onPageChange($event)"
                      showFirstLastButtons>
       </mat-paginator>
+
+      <!-- Transaction History -->
+      <h2 class="section-title">Transaction History</h2>
+      <table mat-table [dataSource]="transactionHistory" class="transaction-table">
+        <ng-container matColumnDef="operationDate">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let element">{{ element.operationDate | date }}</td>
+        </ng-container>
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <td mat-cell *matCellDef="let element">{{ element.type }}</td>
+        </ng-container>
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef>Amount</th>
+          <td mat-cell *matCellDef="let element">{{ element.amount | currency }}</td>
+        </ng-container>
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Description</th>
+          <td mat-cell *matCellDef="let element">{{ element.description }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: historyColumns;"></tr>
+      </table>
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]"
+                     [pageSize]="historyPageSize"
+                     [pageIndex]="historyCurrentPage"
+                     [length]="totalHistoryTransactions"
+                     (page)="onHistoryPageChange($event)"
+                     showFirstLastButtons>
+      </mat-paginator>
     </div>
   `,
   styles: [`
@@ -85,6 +116,7 @@ import { Router } from '@angular/router';
       justify-content: center;
       gap: 15px;
       margin-bottom: 30px;
+      flex-wrap: wrap;
     }
     .action-btn {
       padding: 12px 25px;
@@ -162,10 +194,15 @@ export class UserDashboardComponent implements OnInit {
   dashboard: any = null;
   userAccounts: any[] = [];
   recentTransactions: AccountOperationDTO[] = [];
+  transactionHistory: TransactionHistoryDTO[] = [];
   displayedColumns: string[] = ['operationDate', 'type', 'amount', 'description'];
+  historyColumns: string[] = ['operationDate', 'type', 'amount', 'description'];
   currentPage = 0;
   pageSize = 5;
   totalTransactions = 0;
+  historyCurrentPage = 0;
+  historyPageSize = 5;
+  totalHistoryTransactions = 0;
   error: string | null = null;
 
   constructor(
@@ -178,6 +215,7 @@ export class UserDashboardComponent implements OnInit {
     if (this.authService.isAuthenticated()) {
       this.loadUserAccounts();
       this.loadDashboardData();
+      this.loadTransactionHistory();
     } else {
       this.router.navigate(['/login']);
     }
@@ -201,8 +239,22 @@ export class UserDashboardComponent implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         console.warn('Dashboard data load failed, using local data:', err);
-        this.error = null; // Remove error message
-        this.recentTransactions = []; // Fallback to empty transactions
+        this.error = null;
+        this.recentTransactions = [];
+      }
+    });
+  }
+
+  loadTransactionHistory() {
+    this.bankingService.getTransactionHistory(this.historyCurrentPage, this.historyPageSize).subscribe({
+      next: (transactions: TransactionHistoryDTO[]) => {
+        this.transactionHistory = transactions || [];
+        this.totalHistoryTransactions = transactions.length;
+      },
+      error: (err: HttpErrorResponse) => {
+        console.warn('Failed to load transaction history:', err);
+        this.transactionHistory = [];
+        this.bankingService.showError('Failed to load transaction history');
       }
     });
   }
@@ -211,6 +263,12 @@ export class UserDashboardComponent implements OnInit {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
     this.loadDashboardData();
+  }
+
+  onHistoryPageChange(event: any) {
+    this.historyCurrentPage = event.pageIndex;
+    this.historyPageSize = event.pageSize;
+    this.loadTransactionHistory();
   }
 
   private getUserId(): string {

@@ -44,6 +44,7 @@ interface RegisterForm {
         <button mat-raised-button color="primary" type="submit" [disabled]="!isFormValid()">Register</button>
         <button mat-raised-button color="accent" type="button" (click)="cancel()">Cancel</button>
       </form>
+      <p class="link-text">Do you already have an account? <a routerLink="/login">Sign in</a></p>
     </div>
   `,
   styles: [`
@@ -60,6 +61,18 @@ interface RegisterForm {
     .error {
       color: red;
       margin-bottom: 10px;
+    }
+    .link-text {
+      text-align: center;
+      margin-top: 15px;
+      color: #34495e;
+    }
+    .link-text a {
+      color: #3498db;
+      text-decoration: none;
+    }
+    .link-text a:hover {
+      text-decoration: underline;
     }
   `]
 })
@@ -91,7 +104,7 @@ export class RegisterComponent {
     this.authService.register(this.form).subscribe({
       next: (response: any) => {
         this.bankingService.showSuccess('Registration successful! Please log in.');
-        this.router.navigate(['/login']); // Redirect to login after registration
+        this.router.navigate(['/login']);
       },
       error: (err: HttpErrorResponse) => {
         this.error = 'Registration failed: ' + (err.error?.message || err.message || 'Unknown error');

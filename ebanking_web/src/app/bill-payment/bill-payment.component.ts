@@ -1,13 +1,15 @@
-import { Component, PLATFORM_ID, Inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BankingService } from '../services/banking.service';
+import { RouterModule } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID, Inject } from '@angular/core';
 
 @Component({
   selector: 'app-bill-payment',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="bill-payment">
       <h2>Pay Your Bills</h2>
@@ -32,6 +34,7 @@ import { isPlatformBrowser } from '@angular/common';
           <input id="description" type="text" [(ngModel)]="billData.description" name="description" placeholder="e.g., Monthly electricity bill" required>
         </div>
         <button type="submit">Pay Bill</button>
+        <button type="button" class="back-btn" [routerLink]="['/dashboard']">Back to My Dashboard</button>
         <p *ngIf="successMessage" class="success">{{ successMessage }}</p>
         <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
       </form>
@@ -84,9 +87,16 @@ import { isPlatformBrowser } from '@angular/common';
       font-size: 1rem;
       font-family: 'Roboto', sans-serif;
       cursor: pointer;
+      margin-bottom: 10px;
     }
     button:hover {
       background-color: #E65A50;
+    }
+    .back-btn {
+      background-color: #3498db;
+    }
+    .back-btn:hover {
+      background-color: #2980b9;
     }
     .success {
       color: #00695C;
@@ -118,7 +128,6 @@ export class BillPaymentComponent {
   }
 
   loadAccounts() {
-    // Load accounts from localStorage instead of backend
     this.accounts = JSON.parse(localStorage.getItem('userAccounts') || '[]');
     if (this.accounts.length === 0) {
       this.errorMessage = 'No accounts found. Please create an account first.';
@@ -145,7 +154,6 @@ export class BillPaymentComponent {
       return;
     }
 
-    // Simulate bill payment by updating balance
     selectedAccount.balance -= this.billData.amount;
     localStorage.setItem('userAccounts', JSON.stringify(this.accounts));
 

@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BankingService } from '../services/banking.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-transfer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="transfer">
       <h2>Transfer Funds</h2>
@@ -30,6 +31,7 @@ import { BankingService } from '../services/banking.service';
           <input id="amount" type="number" [(ngModel)]="transferData.amount" name="amount" placeholder="Enter amount" required>
         </div>
         <button type="submit">Transfer</button>
+        <button type="button" class="back-btn" [routerLink]="['/dashboard']">Back to My Dashboard</button>
         <p *ngIf="successMessage" class="success">{{ successMessage }}</p>
         <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
       </form>
@@ -82,9 +84,16 @@ import { BankingService } from '../services/banking.service';
       font-size: 1rem;
       font-family: 'Roboto', sans-serif;
       cursor: pointer;
+      margin-bottom: 10px;
     }
     button:hover {
       background-color: #E65A50;
+    }
+    .back-btn {
+      background-color: #3498db;
+    }
+    .back-btn:hover {
+      background-color: #2980b9;
     }
     .success {
       color: #00695C;
@@ -144,7 +153,6 @@ export class TransferComponent implements OnInit {
       return;
     }
 
-    // Perform the transfer
     fromAccount.balance -= this.transferData.amount;
     toAccount.balance += this.transferData.amount;
 

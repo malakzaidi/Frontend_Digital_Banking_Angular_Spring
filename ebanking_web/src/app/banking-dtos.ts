@@ -53,6 +53,17 @@ export interface CreditDTO {
   description: string;
   userId: string;
 }
+export interface UserProfile {
+  userId: string;
+  username: string;
+  email: string;
+  name: string;
+  phone?: string;
+  address?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 
 export interface DebitDTO {
   accountId: string;

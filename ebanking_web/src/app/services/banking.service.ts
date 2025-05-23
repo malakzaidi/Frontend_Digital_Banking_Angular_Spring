@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { BankAccountDTO, CurrentBankAccountDTO, SavingBankAccountDTO, CustomerDTO, AccountHistoryDTO, CreditDTO, DebitDTO, TransferRequestDTO, TransactionHistoryDTO, UserAccountRequestDTO, UserTransactionDTO, UserTransferDTO, BillPaymentDTO, DashboardDTO } from '../banking-dtos';
+import { BankAccountDTO, CurrentBankAccountDTO, SavingBankAccountDTO, CustomerDTO, AccountHistoryDTO, CreditDTO, DebitDTO, TransferRequestDTO, TransactionHistoryDTO, UserAccountRequestDTO, UserTransactionDTO, UserTransferDTO, BillPaymentDTO, DashboardDTO, UserProfile } from '../banking-dtos';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable({
@@ -113,6 +113,14 @@ export class BankingService {
     return this.http.delete<void>(`${this.apiUrl}/accounts/${accountId}`, { headers: this.getHeaders() });
   }
 
+  getUserProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.apiUrl}/user/profile`, { headers: this.getHeaders() });
+  }
+
+  updateUserProfile(profile: UserProfile): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.apiUrl}/user/profile`, profile, { headers: this.getHeaders() });
+  }
+
   showError(message: string): void {
     this.snackBar.open(message, 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
   }
@@ -120,15 +128,8 @@ export class BankingService {
   showSuccess(message: string): void {
     this.snackBar.open(message, 'Close', { duration: 3000, panelClass: ['success-snackbar'] });
   }
+
   getDashboardData(page: number, size: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/dashboard?page=${page}&size=${size}`, { headers: this.getHeaders() });
   }
-  getUserProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${this.baseUrl}/user/profile`, { headers: this.getHeaders() });
-  }
-
-  updateUserProfile(profile: UserProfile): Observable<UserProfile> {
-    return this.http.put<UserProfile>(`${this.baseUrl}/user/profile`, profile, { headers: this.getHeaders() });
-  }
-
 }
