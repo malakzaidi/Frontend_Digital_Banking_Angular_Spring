@@ -1,6 +1,6 @@
 # 🌐 Digital Banking Application (Spring Boot & Angular) 💰
 
-Welcome to the **Digital Banking Application**, a modern, full-stack web application designed to manage customers, bank accounts, and transactions. This project features a robust backend built with **Spring Boot** and a dynamic frontend developed with **Angular**. It provides a secure and user-friendly platform for performing banking operations such as customer management, account handling, and transaction processing.
+Welcome to the **Digital Banking Application**, a comprehensive, full-stack web application designed to provide complete banking operations management. This project features a robust backend built with **Spring Boot** and a dynamic frontend developed with **Angular**, integrated with advanced security, audit systems, and data visualization capabilities.
 
 ---
 
@@ -11,17 +11,14 @@ Welcome to the **Digital Banking Application**, a modern, full-stack web applica
 - [🛠 Technologies Used](#-technologies-used)
 - [🏗 Project Structure](#-project-structure)
 - [📊 Diagrams](#-diagrams)
-  - [Use Case Diagram](#use-case-diagram)
-  - [Sequence Diagram](#sequence-diagram)
-  - [Class Diagram](#class-diagram)
-  - [Architecture Diagram](#architecture-diagram)
 - [⚙️ Prerequisites](#-prerequisites)
 - [🚀 Setup Instructions](#-setup-instructions)
-  - [Backend Setup (Spring Boot)](#backend-setup-spring-boot)
-  - [Frontend Setup (Angular)](#frontend-setup-angular)
 - [🌍 Running the Application](#-running-the-application)
 - [🔍 API Endpoints](#-api-endpoints)
+- [🔐 Security & Authentication](#-security--authentication)
+- [📊 Dashboard & Analytics](#-dashboard--analytics)
 - [📂 Database Configuration](#-database-configuration)
+- [🔍 Testing](#-testing)
 - [🤝 Contributing](#-contributing)
 - [📜 License](#-license)
 - [📞 Contact](#-contact)
@@ -30,23 +27,84 @@ Welcome to the **Digital Banking Application**, a modern, full-stack web applica
 
 ## ✨ Features
 
-This application provides a comprehensive set of features for digital banking:
+This application provides a comprehensive set of features for modern digital banking:
 
-- **Customer Management** 🧑‍💼
-  - Create, read, update, and delete (CRUD) customer profiles.
-  - Search customers by keyword.
-- **Account Management** 🏦
-  - Create and manage current and savings accounts.
-  - View account details and transaction history.
-- **Transaction Processing** 💸
-  - Perform debit, credit, and transfer operations.
-  - Track transaction history with timestamps and descriptions.
-- **Secure APIs** 🔒
-  - RESTful APIs secured with Spring Security (optional configuration).
-- **Responsive Frontend** 📱
-  - Angular-based UI for a seamless user experience across devices.
-- **Database Integration** 🗄️
-  - Supports MySQL for persistent data storage.
+### 🏦 **Core Banking Operations**
+- **Account Management**
+  - Create and manage Current Accounts and Savings Accounts
+  - View detailed account information and balance tracking
+  - Account status management (Active/Inactive)
+  - Multi-account support per customer
+  
+- **Transaction Processing**
+  - **DEBIT** operations with validation and limits
+  - **CREDIT** operations with instant balance updates
+  - **TRANSFER** operations between accounts (internal transfers)
+  - Real-time transaction processing
+  - Transaction history with detailed timestamps
+  - Operation descriptions and categorization
+
+### 👥 **Customer Management**
+- **Complete CRUD Operations**
+  - Create new customer profiles with validation
+  - Update customer information (personal details, contact info)
+  - Delete customer accounts with cascade operations
+  - Advanced search functionality by name, email, or ID
+  - Customer portfolio overview
+  - Customer-account relationship management
+
+### 🔐 **Security & Authentication**
+- **Spring Security Integration**
+  - JWT (JSON Web Token) based authentication
+  - Secure session management
+  - Role-based access control (RBAC)
+  - Protected API endpoints
+  
+- **User Management System**
+  - User registration and login
+  - Password change functionality
+  - User profile management
+  - Account lockout protection
+  - Session timeout handling
+
+### 📊 **Audit & Compliance**
+- **Complete Audit Trail**
+  - Track user actions for every operation
+  - Record authenticated user ID for all transactions
+  - Timestamp logging for compliance
+  - Operation history for customers and accounts
+  - Data integrity tracking
+
+### 📈 **Dashboard & Analytics**
+- **Advanced Data Visualization**
+  - Interactive charts using **Chart.js** and **ng-chart**
+  - Account balance trends over time
+  - Transaction volume analysis
+  - Customer growth statistics
+  - Financial performance indicators
+  - Real-time dashboard updates
+
+### 🌐 **Modern User Interface**
+- **Responsive Angular Frontend**
+  - Mobile-first responsive design
+  - Intuitive navigation and user experience
+  - Real-time data updates
+  - Form validation and error handling
+  - Modern Material Design components
+  - Cross-browser compatibility
+
+### 🔧 **Technical Features**
+- **RESTful API Architecture**
+  - Complete REST API with proper HTTP methods
+  - Swagger/OpenAPI documentation
+  - JSON data exchange
+  - Error handling and status codes
+  
+- **Database Management**
+  - MySQL integration with JPA/Hibernate
+  - Automatic schema generation and updates
+  - Database connection pooling
+  - Transaction management
 
 ---
 
@@ -54,89 +112,152 @@ This application provides a comprehensive set of features for digital banking:
 
 https://github.com/user-attachments/assets/13a2996d-60a6-4003-b567-3fa595289dcd 
 
-
+---
 
 ## 🛠 Technologies Used
 
-The project leverages modern technologies to ensure scalability, performance, and maintainability:
+### **Backend Technologies**
+| **Component**      | **Technology**                     | **Version**        | **Purpose**                           |
+|---------------------|------------------------------------|--------------------|---------------------------------------|
+| **Framework**       | Spring Boot                        | 3.x                | Main backend framework                |
+| **Security**        | Spring Security + JWT              | Latest             | Authentication & authorization        |
+| **Database**        | MySQL                              | 8.x                | Primary data storage                  |
+| **ORM**             | Spring Data JPA, Hibernate         | Latest             | Object-relational mapping             |
+| **Build Tool**      | Maven                              | 3.x                | Dependency management & build         |
+| **Documentation**   | Swagger/OpenAPI                    | 2.1.0              | API documentation                     |
+| **Testing**         | JUnit, Mockito                     | Latest             | Unit & integration testing            |
 
-| **Component**      | **Technology**                     | **Version**        |
-|---------------------|------------------------------------|--------------------|
-| **Backend**         | Spring Boot                        | 3.x                |
-| **Database**        | MySQL                              | 8.x                |
-| **ORM**             | Spring Data JPA, Hibernate         | Latest             |
-| **Build Tool**      | Maven                              | 3.x                |
-| **Frontend**        | Angular                            | 16.x or higher     |
-| **API Testing**     | Postman/Swagger (optional)         | -                  |
-| **Version Control** | Git                                | -                  |
+### **Frontend Technologies**
+| **Component**      | **Technology**                     | **Version**        | **Purpose**                           |
+|---------------------|------------------------------------|--------------------|---------------------------------------|
+| **Framework**       | Angular                            | 16.x+              | Frontend SPA framework                |
+| **UI Components**   | Angular Material                   | Latest             | Modern UI components                  |
+| **Charts**          | Chart.js + ng-chart               | Latest             | Data visualization                    |
+| **HTTP Client**     | Angular HttpClient                 | Latest             | API communication                     |
+| **Routing**         | Angular Router                     | Latest             | Navigation & routing                  |
+| **Forms**           | Angular Reactive Forms             | Latest             | Form handling & validation            |
+
+### **Development & Deployment**
+| **Component**      | **Technology**                     | **Version**        | **Purpose**                           |
+|---------------------|------------------------------------|--------------------|---------------------------------------|
+| **Version Control** | Git                                | Latest             | Source code management                |
+| **API Testing**     | Postman                            | Latest             | API endpoint testing                  |
+| **Development**     | IntelliJ IDEA / VS Code            | Latest             | IDE for development                   |
 
 ---
 
 ## 🏗 Project Structure
 
-The project is divided into two main parts: the **backend** (Spring Boot) and the **frontend** (Angular). Below is the high-level structure:
-
 ```
-Digital_Banking_application_Spring_Angular-_Backend/
-├── src/                        # Backend source code (Spring Boot)
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/example/digitalbanking/
-│   │   │       ├── controller/   # REST controllers for API endpoints
-│   │   │       ├── entity/       # JPA entities (Customer, Account, etc.)
-│   │   │       ├── repository/   # Spring Data JPA repositories
-│   │   │       ├── service/      # Business logic and services
-│   │   │       ├── dto/          # Data Transfer Objects
-│   │   │       └── mapper/       # Mappers for DTO-to-Entity conversion
-│   │   └── resources/
-│   │       └── application.properties  # Backend configuration
-├── frontend/                   # Angular frontend source code
+Digital_Banking_Application/
+├── backend/                    # Spring Boot Backend
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/example/digitalbanking/
+│   │   │   │   ├── controller/      # REST Controllers
+│   │   │   │   │   ├── CustomerController.java
+│   │   │   │   │   ├── AccountController.java
+│   │   │   │   │   ├── OperationController.java
+│   │   │   │   │   └── AuthController.java
+│   │   │   │   ├── entity/          # JPA Entities
+│   │   │   │   │   ├── Customer.java
+│   │   │   │   │   ├── BankAccount.java
+│   │   │   │   │   ├── CurrentAccount.java
+│   │   │   │   │   ├── SavingAccount.java
+│   │   │   │   │   ├── AccountOperation.java
+│   │   │   │   │   └── User.java
+│   │   │   │   ├── repository/      # Spring Data Repositories
+│   │   │   │   │   ├── CustomerRepository.java
+│   │   │   │   │   ├── BankAccountRepository.java
+│   │   │   │   │   ├── AccountOperationRepository.java
+│   │   │   │   │   └── UserRepository.java
+│   │   │   │   ├── service/         # Business Logic Services
+│   │   │   │   │   ├── BankAccountService.java
+│   │   │   │   │   ├── CustomerService.java
+│   │   │   │   │   └── UserService.java
+│   │   │   │   ├── dto/             # Data Transfer Objects
+│   │   │   │   │   ├── CustomerDTO.java
+│   │   │   │   │   ├── BankAccountDTO.java
+│   │   │   │   │   └── OperationDTO.java
+│   │   │   │   ├── mapper/          # DTO-Entity Mappers
+│   │   │   │   ├── security/        # Security Configuration
+│   │   │   │   │   ├── JwtAuthenticationFilter.java
+│   │   │   │   │   ├── JwtTokenProvider.java
+│   │   │   │   │   └── SecurityConfig.java
+│   │   │   │   └── exception/       # Custom Exceptions
+│   │   │   └── resources/
+│   │   │       ├── application.properties
+│   │   │       └── application-dev.properties
+│   │   └── test/                   # Unit & Integration Tests
+│   ├── pom.xml                     # Maven Dependencies
+│   └── Dockerfile                  # Docker Configuration
+├── frontend/                       # Angular Frontend
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── components/    # Angular components (e.g., customer, account)
-│   │   │   ├── services/      # Angular services for HTTP requests
-│   │   │   └── models/        # TypeScript interfaces (Customer, Account, etc.)
-│   │   └── environments/      # Environment configuration (API endpoints)
-├── pom.xml                    # Maven dependencies for backend
-├── package.json               # Node.js dependencies for frontend
-└── README.md                  # This file
+│   │   │   ├── components/
+│   │   │   │   ├── customer/       # Customer Management
+│   │   │   │   ├── account/        # Account Management
+│   │   │   │   ├── operation/      # Transaction Operations
+│   │   │   │   ├── dashboard/      # Analytics Dashboard
+│   │   │   │   ├── auth/           # Authentication
+│   │   │   │   └── shared/         # Shared Components
+│   │   │   ├── services/
+│   │   │   │   ├── customer.service.ts
+│   │   │   │   ├── account.service.ts
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   └── dashboard.service.ts
+│   │   │   ├── models/             # TypeScript Interfaces
+│   │   │   ├── guards/             # Route Guards
+│   │   │   ├── interceptors/       # HTTP Interceptors
+│   │   │   └── pipes/              # Custom Pipes
+│   │   ├── assets/                 # Static Assets
+│   │   └── environments/           # Environment Configuration
+│   ├── package.json                # NPM Dependencies
+│   └── angular.json                # Angular Configuration
+├── docs/                           # Documentation
+│   ├── api-documentation.md
+│   ├── user-guide.md
+│   └── deployment-guide.md
+└── README.md                       # This File
 ```
 
+---
 
 ## 📊 Diagrams
 
-Below are placeholders for the diagrams you have prepared. Please insert the images or links to the respective diagrams in the designated sections.
-
 ### Sequence Diagram
-
-![image](https://github.com/user-attachments/assets/1ade4edc-1656-402f-a342-255c7ce67981)
-
+![Sequence Diagram](https://github.com/user-attachments/assets/1ade4edc-1656-402f-a342-255c7ce67981)
 
 ### Class Diagram
-
-![Image](https://github.com/user-attachments/assets/3f09e90d-d792-4a63-8cb6-c6daa8de0c49)
+![Class Diagram](https://github.com/user-attachments/assets/3f09e90d-d792-4a63-8cb6-c6daa8de0c49)
 
 ### Architecture Diagram
+![Architecture Diagram](https://github.com/user-attachments/assets/6f965314-e451-461c-8dc3-6a678be57137)
 
-![Image](https://github.com/user-attachments/assets/6f965314-e451-461c-8dc3-6a678be57137)
-
+---
 
 ## ⚙️ Prerequisites
 
-Before setting up the project, ensure you have the following installed:
+Ensure you have the following installed:
 
+### **Required Software**
 - **Java**: JDK 17 or higher ☕
 - **Maven**: 3.8.x or higher 🛠️
 - **MySQL**: 8.x or higher 🗄️
 - **Node.js**: 18.x or higher 📦
 - **Angular CLI**: 16.x or higher 🌐
-- **Git**: For cloning the repository 📂
+- **Git**: Latest version 📂
+
+### **Optional Tools**
+- **Docker**: For containerized deployment 🐳
+- **Postman**: For API testing 📮
+- **VS Code** or **IntelliJ IDEA**: For development 💻
 
 ---
 
 ## 🚀 Setup Instructions
 
-### Backend Setup (Spring Boot)
+### **Backend Setup (Spring Boot)**
 
 1. **Clone the Repository** 📥
    ```bash
@@ -145,30 +266,43 @@ Before setting up the project, ensure you have the following installed:
    ```
 
 2. **Configure MySQL Database** 🗄️
-   - Create a MySQL database named `bank`.
-   - Update the `application.properties` file in `src/main/resources/` with your database credentials:
-     ```properties
-     spring.datasource.url=jdbc:mysql://localhost:3306/bank?createDatabaseIfNotExist=true
-     spring.datasource.username=root
-     spring.datasource.password=your_password
-     spring.jpa.hibernate.ddl-auto=update
-     spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
-     ```
+   ```sql
+   CREATE DATABASE bank;
+   CREATE USER 'bank_user'@'localhost' IDENTIFIED BY 'bank_password';
+   GRANT ALL PRIVILEGES ON bank.* TO 'bank_user'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
 
-3. **Build the Backend** 🛠️
+3. **Update Application Properties** ⚙️
+   ```properties
+   # Database Configuration
+   spring.datasource.url=jdbc:mysql://localhost:3306/bank?createDatabaseIfNotExist=true
+   spring.datasource.username=bank_user
+   spring.datasource.password=bank_password
+   spring.jpa.hibernate.ddl-auto=update
+   spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+   
+   # JWT Configuration
+   jwt.secret=mySecretKey
+   jwt.expiration=86400000
+   
+   # Server Configuration
+   server.port=8080
+   
+   # Swagger Configuration
+   springdoc.api-docs.path=/api-docs
+   springdoc.swagger-ui.path=/swagger-ui.html
+   ```
+
+4. **Build and Run Backend** 🛠️
    ```bash
    mvn clean install
-   ```
-
-4. **Run the Backend** 🚀
-   ```bash
    mvn spring-boot:run
    ```
-   The backend will start on `http://localhost:8080`.
 
-### Frontend Setup (Angular)
+### **Frontend Setup (Angular)**
 
-1. **Navigate to the Frontend Directory** 📂
+1. **Navigate to Frontend Directory** 📂
    ```bash
    cd frontend
    ```
@@ -178,101 +312,254 @@ Before setting up the project, ensure you have the following installed:
    npm install
    ```
 
-3. **Configure API Endpoint** 🌐
-   - Update the `environment.ts` file in `frontend/src/environments/` to point to the backend API:
-     ```typescript
-     export const environment = {
-       production: false,
-       backendHost: 'http://localhost:8080'
-     };
-     ```
+3. **Configure Environment** 🌐
+   ```typescript
+   // src/environments/environment.ts
+   export const environment = {
+     production: false,
+     backendHost: 'http://localhost:8080',
+     jwtTokenKey: 'jwt-token'
+   };
+   ```
 
-4. **Run the Frontend** 🚀
+4. **Run Frontend** 🚀
    ```bash
    ng serve
    ```
-   The frontend will start on `http://localhost:4200`.
 
 ---
 
 ## 🌍 Running the Application
 
-1. Ensure the MySQL database is running.
-2. Start the Spring Boot backend (`mvn spring-boot:run`).
-3. Start the Angular frontend (`ng serve`).
-4. Open your browser and navigate to `http://localhost:4200` to access the application.
+### **Development Mode**
+1. Start MySQL database server
+2. Run backend: `mvn spring-boot:run` (Port 8080)
+3. Run frontend: `ng serve` (Port 4200)
+4. Access application: `http://localhost:4200`
+
+### **Production Mode**
+1. Build frontend: `ng build --prod`
+2. Build backend: `mvn clean package`
+3. Deploy JAR file to server
+4. Configure production database
 
 ---
 
 ## 🔍 API Endpoints
 
-The backend exposes RESTful APIs for managing banking operations. Below are key endpoints:
-
+### **Authentication Endpoints**
 | **Method** | **Endpoint**                       | **Description**                          |
 |------------|------------------------------------|------------------------------------------|
-| GET        | `/customers`                      | Retrieve all customers                   |
-| GET        | `/customers/{id}`                 | Retrieve a customer by ID                |
-| POST       | `/customers`                      | Create a new customer                    |
-| PUT        | `/customers/{id}`                 | Update an existing customer              |
-| DELETE     | `/customers/{id}`                 | Delete a customer                        |
-| GET        | `/accounts/{id}`                  | Retrieve account details                 |
-| POST       | `/accounts/debit`                 | Debit an account                        |
-| POST       | `/accounts/credit`                | Credit an account                       |
-| POST       | `/accounts/transfer`              | Transfer funds between accounts          |
+| POST       | `/auth/login`                     | User authentication                      |
+| POST       | `/auth/register`                  | User registration                        |
+| POST       | `/auth/refresh`                   | Refresh JWT token                        |
+| POST       | `/auth/logout`                    | User logout                              |
 
-For a complete API documentation, you can integrate **Swagger** by adding the following dependency to `pom.xml`:
-```xml
-<dependency>
-    <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-    <version>2.1.0</version>
-</dependency>
-```
-Then access Swagger UI at `http://localhost:8080/swagger-ui.html`.
+### **Customer Management**
+| **Method** | **Endpoint**                       | **Description**                          |
+|------------|------------------------------------|------------------------------------------|
+| GET        | `/api/customers`                  | Retrieve all customers                   |
+| GET        | `/api/customers/{id}`             | Retrieve customer by ID                  |
+| POST       | `/api/customers`                  | Create new customer                      |
+| PUT        | `/api/customers/{id}`             | Update customer                          |
+| DELETE     | `/api/customers/{id}`             | Delete customer                          |
+| GET        | `/api/customers/search`           | Search customers by keyword              |
+
+### **Account Management**
+| **Method** | **Endpoint**                       | **Description**                          |
+|------------|------------------------------------|------------------------------------------|
+| GET        | `/api/accounts`                   | Retrieve all accounts                    |
+| GET        | `/api/accounts/{id}`              | Retrieve account by ID                   |
+| POST       | `/api/accounts/current`           | Create current account                   |
+| POST       | `/api/accounts/savings`           | Create savings account                   |
+| PUT        | `/api/accounts/{id}`              | Update account                           |
+| DELETE     | `/api/accounts/{id}`              | Delete account                           |
+
+### **Transaction Operations**
+| **Method** | **Endpoint**                       | **Description**                          |
+|------------|------------------------------------|------------------------------------------|
+| POST       | `/api/accounts/{id}/debit`        | Debit account                           |
+| POST       | `/api/accounts/{id}/credit`       | Credit account                          |
+| POST       | `/api/accounts/transfer`          | Transfer between accounts               |
+| GET        | `/api/accounts/{id}/operations`   | Get transaction history                 |
+| GET        | `/api/accounts/{id}/pageOperations` | Get paginated transactions            |
+
+### **Dashboard & Analytics**
+| **Method** | **Endpoint**                       | **Description**                          |
+|------------|------------------------------------|------------------------------------------|
+| GET        | `/api/dashboard/stats`            | Get dashboard statistics                 |
+| GET        | `/api/dashboard/charts`           | Get chart data                          |
+| GET        | `/api/reports/customers`          | Customer reports                        |
+| GET        | `/api/reports/transactions`       | Transaction reports                     |
+
+**Swagger Documentation**: `http://localhost:8080/swagger-ui.html`
+
+---
+
+## 🔐 Security & Authentication
+
+### **JWT Implementation**
+- Token-based authentication system
+- Secure password hashing using BCrypt
+- Role-based access control (Admin, User)
+- Token expiration and refresh mechanism
+
+### **Security Features**
+- Protected API endpoints
+- CORS configuration for frontend integration
+- SQL injection prevention
+- XSS protection
+- Session management
+
+### **User Roles & Permissions**
+- **ADMIN**: Full access to all operations
+- **USER**: Limited access to own accounts and operations
+- **MANAGER**: Customer and account management access
+
+---
+
+## 📊 Dashboard & Analytics
+
+### **Available Charts & Metrics**
+- **Account Balance Trends**: Line charts showing balance evolution
+- **Transaction Volume**: Bar charts for daily/monthly transactions
+- **Customer Growth**: Growth metrics over time
+- **Account Type Distribution**: Pie charts for account types
+- **Operation Statistics**: Transaction type breakdowns
+
+### **Real-time Updates**
+- Live dashboard data refresh
+- WebSocket integration for real-time notifications
+- Instant balance updates after transactions
 
 ---
 
 ## 📂 Database Configuration
 
-The application uses **MySQL** as the primary database. Key entities include:
+### **Entity Relationships**
+```sql
+Customer (1) -----> (*) BankAccount
+BankAccount (1) -----> (*) AccountOperation
+User (1) -----> (*) AuditLog
+```
 
-- **Customer**: Stores customer information (ID, name, email).
-- **BankAccount**: Represents accounts (ID, type, balance, status, etc.).
-- **AccountOperation**: Tracks transactions (ID, operation date, amount, type).
+### **Key Tables**
+- **customers**: Customer personal information
+- **bank_accounts**: Account details (current/savings)
+- **account_operations**: Transaction history
+- **users**: Application users and authentication
+- **audit_logs**: System audit trail
 
-The database schema is automatically created/updated via **Spring Data JPA** (`spring.jpa.hibernate.ddl-auto=update`).
+### **Database Indexes**
+- Customer email (unique)
+- Account number (unique)
+- Operation date (for performance)
+- User username (unique)
+
+---
+
+## 🔍 Testing
+
+### **Backend Testing**
+```bash
+# Run all tests
+mvn test
+
+# Run specific test class
+mvn test -Dtest=CustomerServiceTest
+
+# Generate test coverage report
+mvn jacoco:report
+```
+
+### **Frontend Testing**
+```bash
+# Run unit tests
+ng test
+
+# Run e2e tests
+ng e2e
+
+# Generate coverage report
+ng test --code-coverage
+```
+
+### **API Testing**
+- Postman collection available in `/docs/postman/`
+- Automated API tests with Newman
+- Integration tests for all endpoints
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! 🚀 Follow these steps to contribute:
+We welcome contributions! Please follow these guidelines:
 
-1. Fork the repository 🍴
-2. Create a new branch (`git checkout -b feature/your-feature`) 🌿
-3. Commit your changes (`git commit -m "Add your feature"`) 📝
-4. Push to the branch (`git push origin feature/your-feature`) 🚀
-5. Open a Pull Request 📬
+### **Development Workflow**
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for detailed guidelines.
+### **Code Standards**
+- Follow Java coding conventions for backend
+- Use Angular style guide for frontend
+- Write unit tests for new features
+- Update documentation for API changes
+
+### **Commit Message Format**
+```
+type(scope): description
+
+[optional body]
+[optional footer]
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 ---
 
 ## 📜 License
 
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📞 Contact
+## 📞 Contact & Support
 
-For questions or support, feel free to reach out:
-
+### **Project Maintainer**
 - **GitHub**: [malakzaidi](https://github.com/malakzaidi)
-- **Email**: malakzaidi@example.com (replace with actual email)
-- **Issues**: Open an issue on this repository 📢
+- **Email**: malakzaidi@example.com
+- **LinkedIn**: [Malak Zaidi](https://linkedin.com/in/malakzaidi)
+
+### **Support Channels**
+- **Issues**: [GitHub Issues](https://github.com/malakzaidi/Digital_Banking_application_Spring_Angular-_Backend/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/malakzaidi/Digital_Banking_application_Spring_Angular-_Backend/discussions)
+- **Wiki**: [Project Wiki](https://github.com/malakzaidi/Digital_Banking_application_Spring_Angular-_Backend/wiki)
 
 ---
 
-🌟 **Thank you for exploring the Digital Banking Application!** 🌟  
-We hope this project inspires you to build innovative banking solutions. Happy coding! 💻
+## 🎯 Roadmap
+
+### **Upcoming Features**
+- [ ] Mobile application (React Native)
+- [ ] Advanced reporting system
+- [ ] Multi-currency support
+- [ ] Integration with external payment systems
+- [ ] Machine learning for fraud detection
+- [ ] Microservices architecture migration
+
+### **Version History**
+- **v1.0.0** - Initial release with core banking features
+- **v1.1.0** - Added JWT authentication and dashboard
+- **v1.2.0** - Enhanced security and audit trail
+- **v2.0.0** - Complete UI/UX redesign and advanced analytics
+
+---
+
+🌟 **Thank you for exploring the Digital Banking Application!** 🌟
+
+This comprehensive banking solution demonstrates modern full-stack development practices with enterprise-grade security, analytics, and user experience. We hope this project serves as a valuable reference for building secure, scalable financial applications.
+
+**Happy Banking! 💰💻**
